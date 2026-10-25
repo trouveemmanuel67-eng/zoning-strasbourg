@@ -125,7 +125,8 @@ function generate(team,nDays,minFloor){
     // CES : FLOOR sauf 2h PIPE (10h-12h) le jour choisi
     ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&!Z[p.id][d][i]){
       Z[p.id][d][i]=m>=1080?null:(cesPipeDay[p.id]===d&&m>=600&&m<720)?'PIPE':'FLOOR'}})); // CES : fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
-    // SA : chaque jour un temps de FLOOR, UN bloc PIPE et un bloc BACKUP FLOOR (hors 9-10h et pause), blocs ≥ 1h.
+    // SA : jamais de retour sur un poste déjà fait : exactement UN bloc FLOOR, UN bloc PIPE, UN bloc BACKUP FLOOR par jour
+    // (exception : 2 SA présents → dernière rotation FLOOR 17h00-18h30, 2e FLOOR autorisé) ; pause de préférence entre deux postes (hors 9-10h et pause), blocs ≥ 1h.
     // ≤ 2 SA en PIPE en même temps, idéalement 1 seul en BACKUP ; BACKUP ne compte pas dans le minimum FLOOR.
     // 2 SA présents : rotation complémentaire à 17h00 (l'un FLOOR, l'autre PIPE, puis échange).
     const saP=sas.filter(p=>presentAt(p,d,600)),N=SLOTS.length,two=saP.length===2,R17=SLOTS.indexOf(1020);
@@ -135,7 +136,7 @@ function generate(team,nDays,minFloor){
     const cands=p=>{const base=Z[p.id][d],out=[];
       const mk=(a,lp,c,lb)=>{const r=base.slice();for(let i=2;i<N;i++)if(!r[i])r[i]=(i>=a&&i<a+lp)?'PIPE':(i>=c&&i<c+lb)?'BACKUP':'FLOOR';return r};
       for(let a=2;a<N;a++)for(const lp of [2,3,4,5,6,7,8,9,10])for(let c=2;c<N;c++)for(const lb of [2,3,4,5,6,7,8]){if(a+lp>N||c+lb>N||(c<a+lp&&a<c+lb))continue;
-        const r=mk(a,lp,c,lb);if(!runsOk(r)||blocks(r,'PIPE')!==1||blocks(r,'BACKUP')!==1||cnt(r,'PIPE')<2||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
+        const r=mk(a,lp,c,lb);const nf=blocks(r,'FLOOR');if(!runsOk(r)||blocks(r,'PIPE')!==1||blocks(r,'BACKUP')!==1||!(nf===1||(two&&nf===2&&r[R17]==='FLOOR'&&r[R17-1]!=='FLOOR'))||cnt(r,'PIPE')<2||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
         if(two&&!(r[R17]===r[R17+1]&&r[R17+1]===r[N-1]&&(r[R17]==='FLOOR'||r[R17]==='PIPE')&&r[R17-1]!==r[R17]))continue;
         out.push(r)}return out};
     const C={};saP.forEach(p=>C[p.id]=cands(p));
@@ -144,9 +145,9 @@ function generate(team,nDays,minFloor){
     const plan={};
     const fixedF=i=>team.filter(q=>!saP.includes(q)&&Z[q.id][d][i]==='FLOOR').length;
     const score=()=>{let sc=0;for(let i=2;i<N;i++){let f=fixedF(i),pp=0,bb=0;saP.forEach(q=>{const v=plan[q.id][i];if(v==='FLOOR')f++;if(v==='PIPE')pp++;if(v==='BACKUP')bb++});
-        const sf=saP.filter(q=>plan[q.id][i]==='FLOOR').length;sc+=Math.max(0,sf-saFloorCap(d))*2e5+Math.max(0,pp-2)*1e5;sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*3e4}
+        const sf=saP.filter(q=>plan[q.id][i]==='FLOOR').length;sc+=Math.max(0,sf-saFloorCap(d))*2e5+Math.max(0,pp-2)*1e5;sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*1.5e5}
       if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e4}
-      saP.forEach(q=>{const r=plan[q.id];sc+=(cnt(r,'PIPE')-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)});return sc};
+      saP.forEach(q=>{const r=plan[q.id];const pi=r.indexOf('PAUSE');if(pi>2&&r[pi-1]===r[pi+2])sc+=900;sc+=(cnt(r,'PIPE')-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)});return sc};
     // recherche locale avec plusieurs départs (graine déterministe), on garde le meilleur plan
     let seed=d*9973+saP.length*31+1;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;let bestPlan=null,bestSc=Infinity;
     for(let rs=0;rs<RESTARTS;rs++){
