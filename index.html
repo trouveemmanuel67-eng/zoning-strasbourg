@@ -17,7 +17,7 @@ h1{margin:0;font-size:30px;font-weight:600;color:#fff}.sub{color:#9a9aa2;font-si
 .dim{color:#666}.col{position:relative;border-left:1px solid #222;background:repeating-linear-gradient(#26262c 0 1px,#0000 1px 56px)}
 .hr{position:absolute;right:6px;font-size:13px;font-weight:800;color:#f2f2f5;transform:translateY(-8px);z-index:6;text-shadow:0 0 3px #000}
 .gl{position:absolute;inset:0;pointer-events:none;z-index:5}.gl i{position:absolute;left:0;right:0;display:block}.gl .gH{border-top:2px solid rgba(235,235,245,.55)}.gl .gh{border-top:1px dashed rgba(200,200,215,.28)}
-.tog{cursor:pointer;transition:background .15s}.tog:hover{background:#2a2a34;box-shadow:inset 0 -2px 0 #e31937}
+.hr.m45{color:#e0b0b0}.tog{cursor:pointer;transition:background .15s}.tog:hover{background:#2a2a34;box-shadow:inset 0 -2px 0 #e31937}
 .card{position:absolute;border-radius:5px;border:1px solid;box-shadow:none;padding:5px 6px;font-size:11px;overflow:hidden;cursor:pointer}
 .card:hover{filter:brightness(.95)}.card b{font-size:11px;font-weight:700}.card .t{opacity:.85;margin:2px 0;font-size:10px}
 .g{}.hr.hh{font-size:10px;font-weight:600;color:#a8a8b2}.wc{display:flex;align-items:center;justify-content:center;padding:0!important}.wc .t,.wc .av,.wc .nm{display:none}.wc b{font-size:10px!important;white-space:nowrap}.wdh{font-size:11px;letter-spacing:0;white-space:normal;padding:8px 3px 4px;line-height:1.25}.wlg{margin-top:14px;font-size:13px;color:#ccc}.wlg i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin:0 6px 0 16px;border:1px solid}.absc{position:absolute;left:3px;right:3px;border-radius:5px;background:#c3c3c8;border:1px solid #b0b0b5}
@@ -25,7 +25,6 @@ h1{margin:0;font-size:30px;font-weight:600;color:#fff}.sub{color:#9a9aa2;font-si
 .PIPE{background:#ef8f8f;color:#3d0b0b;border-color:#d96a6a!important}
 .CLEAN{background:#f3dde3;color:#4a2530;border-color:#e3bfc9!important}
 .PAUSE{background:#33ccff;color:#06263a;border-color:#12a9e0!important}
-.FIN{background:#e4e4e8!important;color:#6a6a70!important;border-color:#c8c8ce!important}
 .BACKUP{background:#fff3b0;color:#4a3b00;border-color:#e6cf5c!important}
 .wc.BACKUP b{white-space:normal!important;text-align:center;line-height:1.1}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
@@ -94,7 +93,7 @@ function generate(team,nDays,minFloor){
     sas.forEach(p=>{const sc=st=>Math.max(occ[st],occ[st+30])*10+occ[st]+occ[st+30];const opts=[720,780,750].sort((a,b)=>sc(a)-sc(b));opts.some(st=>setB(p,st))});
     // CES : FLOOR sauf 2h PIPE (10h-12h) le jour choisi
     ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&!Z[p.id][d][i]){
-      Z[p.id][d][i]=m>=1080?'FIN':(cesPipeDay[p.id]===d&&m>=600&&m<720)?'PIPE':'FLOOR'}})); // CES : fin de journée 17h45 (case FIN 17h45-18h30)
+      Z[p.id][d][i]=m>=1080?null:(cesPipeDay[p.id]===d&&m>=600&&m<720)?'PIPE':'FLOOR'}})); // CES : fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
     // SA : chaque jour un temps de FLOOR, UN bloc PIPE et un bloc BACKUP FLOOR (hors 9-10h et pause), blocs ≥ 1h.
     // ≤ 2 SA en PIPE en même temps, idéalement 1 seul en BACKUP ; BACKUP ne compte pas dans le minimum FLOOR.
     // 2 SA présents : rotation complémentaire à 17h00 (l'un FLOOR, l'autre PIPE, puis échange).
@@ -124,13 +123,13 @@ function generate(team,nDays,minFloor){
   }
   return Z;
 }
-function shortBlocks(Z,team,nDays){const out=[];team.forEach(p=>{for(let d=0;d<nDays;d++){const r=Z[p.id][d];let i=0;while(i<r.length){const v=r[i];let j=i;while(j+1<r.length&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&v!=='FIN'&&j===i)out.push({id:p.id,d,at:SLOTS[i],v});i=j+1}}});return out}
+function shortBlocks(Z,team,nDays){const out=[];team.forEach(p=>{for(let d=0;d<nDays;d++){const r=Z[p.id][d];let i=0;while(i<r.length){const v=r[i];let j=i;while(j+1<r.length&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&j===i)out.push({id:p.id,d,at:SLOTS[i],v});i=j+1}}});return out}
 function totals(Z,id){let f=0,p=0,b=0;Z[id].forEach(r=>r.forEach(v=>{if(v==='FLOOR')f+=.5;if(v==='PIPE'||v==='CLEAN')p+=.5;if(v==='BACKUP')b+=.5}));return{f,p,b}}
 if(typeof module!=='undefined')module.exports={generate,shortBlocks,totals,SLOTS,DAYS,presentAt};
 /*ALGO-END*/
 const MAXJ=6,nPres=(d,ex)=>S.team.filter(p=>p!==ex&&!p.days[d].absent).length;
-const LAB={FIN:'FIN',FLOOR:'FLOOR',PIPE:'PIPE',BACKUP:'BACKUP FLOOR',PAUSE:'PAUSE',CLEAN:'PIPE/CLEAN'},CYC=['FLOOR','PIPE','BACKUP','PAUSE','CLEAN',null];
-const COL={FIN:'#e4e4e8',BACKUP:'#fff3b0',FLOOR:'#cfe6d4',PIPE:'#ef8f8f',CLEAN:'#f3dde3',PAUSE:'#33ccff'};
+const LAB={FLOOR:'FLOOR',PIPE:'PIPE',BACKUP:'BACKUP FLOOR',PAUSE:'PAUSE',CLEAN:'PIPE/CLEAN'},CYC=['FLOOR','PIPE','BACKUP','PAUSE','CLEAN',null];
+const COL={BACKUP:'#fff3b0',FLOOR:'#cfe6d4',PIPE:'#ef8f8f',CLEAN:'#f3dde3',PAUSE:'#33ccff'};
 let S=JSON.parse(localStorage.getItem('zoningStras')||'null');
 const TEAM0=[['Manale','CES',3],['David','CES',4],['Hairdine','SA',0],['Francky','SA',1],['Manu','SA',2],['Tanguy','SA',5]]; // [nom, rôle, jour OFF par défaut (modifiable)]
 const mkTeam=()=>TEAM0.map(([n,r,o],k)=>({id:'p'+k,name:n,role:r,days:DAYS.map((_,d)=>({absent:d===6||d===o}))}));
@@ -171,12 +170,12 @@ function dayPanel(d,W){const RH=W?24:34,cols=colsFor(d),pr=cols.map(c=>c.p),L=MA
  let h=`<div class="dpan ${d>=5?'wkend':''}"><div class="dtitle">${DAYS[d].toUpperCase()} ${dt.getDate()} <span>${dt.toLocaleDateString('fr-FR',{month:'long'})}</span></div>
  <div class="cal" style="grid-template-columns:52px repeat(${L},minmax(0,1fr))${W?'':' '+FC+'px'}"><div class="hc dh" style="border-left:0"></div>`;
  h+=cols.map(({p,abs})=>!p?'<div class="dh">&nbsp;<small>&nbsp;</small></div>':`<div class="dh${W?' wdh':''} tog" data-tog="${p.id}" onclick="togP('${p.id}',${d})" title="${esc(p.name)} — cliquer pour passer ${abs?'ON (présent)':'OFF'} ce jour">${esc(p.name)}<small style="justify-content:center;${W&&!abs?'color:'+(p.role==='CES'?'#e0b0b0':'#9ab')+';font-weight:700':''}">${abs?'OFF':p.role}</small></div>`).join('');
- h+=(W?'':'<div class="dh">FLOOR</div>')+'<div class="hc" style="position:relative">'+gl(RH)+[...SLOTS,1110].map((m,i)=>`<div class="hr${m%60?' hh':''}" style="top:${i*RH}px">${W?fmt(m):fmt(m).replace('h',':')}</div>`).join('')+'</div>';
+ h+=(W?'':'<div class="dh">FLOOR</div>')+'<div class="hc" style="position:relative">'+gl(RH)+[...SLOTS,1110].map((m,i)=>`<div class="hr${m%60?' hh':''}" style="top:${i*RH}px">${W?fmt(m):fmt(m).replace('h',':')}</div>`).join('')+`<div class="hr hh m45" style="top:${17.5*RH}px">${W?'17h45':'17:45'}</div>`+'</div>';
  const H=(SLOTS.length+1)*RH,bg=`background:repeating-linear-gradient(#34343c 0 1px,#0000 1px ${2*RH}px),repeating-linear-gradient(#1f1f25 0 1px,#0000 1px ${RH}px)`;
- cols.forEach(({p,abs})=>{if(!p||abs){h+=`<div class="col" style="height:${H}px;position:relative"><div class="absc" style="top:2px;height:${SLOTS.length*RH-4}px"></div>${gl(RH)}</div>`;return}h+=`<div class="col" style="height:${H}px;${bg}">`;if(ok()){const r=S.Z[p.id][d];let i=0;while(i<SLOTS.length){const v=r[i];let j=i;while(j+1<SLOTS.length&&r[j+1]===v)j++;
-   if(v&&presentAt(p,d,SLOTS[i])){const sh=v==='FIN'?-RH/2:(r[j+1]==='FIN'?RH/2:0),top0=i*RH+2+(v==='FIN'?-RH/2:0),ht=(j-i+1)*RH-4+(v==='FIN'?RH/2:-sh),big=ht>(W?50:60),t1=v==='FIN'?1110:r[j+1]==='FIN'?SLOTS[j]+15:SLOTS[j]+30,t0=v==='FIN'?SLOTS[i]-15:SLOTS[i];
+ cols.forEach(({p,abs})=>{if(!p||abs){h+=`<div class="col" style="height:${H}px;position:relative"><div class="absc" style="top:0;height:${SLOTS.length*RH}px"></div>${gl(RH)}</div>`;return}h+=`<div class="col" style="height:${H}px;${bg}">`;if(ok()){const r=S.Z[p.id][d];let i=0;while(i<SLOTS.length){const v=r[i];let j=i;while(j+1<SLOTS.length&&r[j+1]===v)j++;
+   if(v&&presentAt(p,d,SLOTS[i])){const cut=p.role==='CES'&&j===SLOTS.length-2&&!r[j+1],top0=i*RH,ht=(j-i+1)*RH-(cut?RH/2:0),big=ht>(W?50:60),t1=cut?SLOTS[j]+15:SLOTS[j]+30,t0=SLOTS[i];
     h+=`<div class="card g ${v}${W?' wc':''}" style="top:${top0}px;left:3px;right:3px;height:${ht}px;padding:${narrow?'3px':'5px 7px'}" onclick="cycB('${p.id}',${d},${i},${j})" title="${esc(p.name)} — ${LAB[v]} ${fmt(t0)}–${fmt(t1)}">
-    <b style="${tiny?'font-size:9px':''}">${W?LAB[v]:tiny?{FLOOR:'FLR',PIPE:'PIPE',CLEAN:'CLN',PAUSE:'PSE',BACKUP:'BKP'}[v]:narrow&&v==='CLEAN'?'CLEAN':LAB[v]}</b>${big?`<div class="t">${fmt(t0)} – ${fmt(t1)}</div>${W?'':`<span class="av">${ini(p.name)}</span><span class="nm">${esc(p.name)}</span>`}`:(narrow?'':` <span class="t">${v==='FIN'?fmt(t0)+' – '+fmt(t1):fmt(SLOTS[i])}</span>`)}</div>`}
+    <b style="${tiny?'font-size:9px':''}">${W?LAB[v]:tiny?{FLOOR:'FLR',PIPE:'PIPE',CLEAN:'CLN',PAUSE:'PSE',BACKUP:'BKP'}[v]:narrow&&v==='CLEAN'?'CLEAN':LAB[v]}</b>${big?`<div class="t">${fmt(t0)} – ${fmt(t1)}</div>${W?'':`<span class="av">${ini(p.name)}</span><span class="nm">${esc(p.name)}</span>`}`:(narrow?'':` <span class="t">${fmt(SLOTS[i])}</span>`)}</div>`}
    i=j+1}}h+=gl(RH)+'</div>'});
  if(!W)h+=`<div class="col fc" style="height:${H}px;${bg}">`+(ok()?SLOTS.map((m,i)=>{const n=fl(d,i),w=m>=600&&n<S.min;return `<div class="fcell ${w?'warn':''}" style="top:${i*RH+2}px;height:${RH-4}px" title="${n} sur le FLOOR${w?' — sous le minimum':''}">${n}${w?' ⚠':''}</div>`}).join(''):'')+gl(RH)+'</div>';
  return h+'</div></div>'}
@@ -208,7 +207,7 @@ window.onbeforeprint=()=>{if(!ok())return;tableV.style.display='';const c=S.cur;
 if(location.hash.startsWith('#demo')&&!S.Z)gen();if(location.hash==='#demo-w')S.calDay='w';
 renderPres();render();
 
-const CC={FIN:['#e4e4e8','#6a6a70','#c8c8ce'],FLOOR:['#cfe6d4','#1d3a27','#a9cdb2'],PIPE:['#ef8f8f','#3d0b0b','#d96a6a'],CLEAN:['#f3dde3','#4a2530','#e3bfc9'],PAUSE:['#33ccff','#06263a','#12a9e0'],BACKUP:['#fff3b0','#4a3b00','#e6cf5c']};
+const CC={FLOOR:['#cfe6d4','#1d3a27','#a9cdb2'],PIPE:['#ef8f8f','#3d0b0b','#d96a6a'],CLEAN:['#f3dde3','#4a2530','#e3bfc9'],PAUSE:['#33ccff','#06263a','#12a9e0'],BACKUP:['#fff3b0','#4a3b00','#e6cf5c']};
 function jpgDays(){const n=nD();if(S.table)return [S.cur<n?S.cur:0];return S.calDay==='w'?[...Array(n).keys()]:[S.calDay<n?S.calDay:0]}
 function setAbs(i,d,el){const p=S.team[i];if(!el.checked&&nPres(d,p)>=MAXJ){alert('Maximum '+MAXJ+' collaborateurs par jour : '+DAYS[d]+' en compte déjà '+MAXJ+'. Marquez d\'abord quelqu\'un OFF ce jour-là.');el.checked=true;return}p.days[d].absent=el.checked;save();renderPres()}
 function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?26:20,TW=58,NC=MAXJ,PERROW=W1?1:3,PAD=24,GAP=22,TOP=W1?96:90,DT=40;
@@ -237,10 +236,10 @@ function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?26:20,TW=58,NC
   [...SLOTS,1110].forEach((m,i)=>{const y=y0+i*RH;{g.strokeStyle=m%60?'#3a3a44':'#9a9aa6';g.beginPath();g.moveTo(x0,y);g.lineTo(px+PW-8,y);g.stroke()}
    tx(fmt(m),x0-8,y,m%60?(W1?'400 11px ':'400 9px ')+F:(W1?'600 13px ':'600 11px ')+F,m%60?'#777':'#999','right')});
   for(let i=0;i<NC;i++){const cx=x0+i*CW,p=cols[i].p,abs=cols[i].abs;g.strokeStyle='#22222a';g.beginPath();g.moveTo(cx,py+DT+6);g.lineTo(cx,y0+SLOTS.length*RH+6);g.stroke();
-   if(!p||abs)rr(cx+5,y0+2,CW-10,SLOTS.length*RH-4,5,'#c3c3c8','#b0b0b5');if(!p)continue;const L=wrap(p.name,CW-12,NF);let ly=py+DT+8+LH/2;L.forEach(l=>{tx(l,cx+CW/2,ly,NF,'#eee','center');ly+=LH});
+   if(!p||abs)rr(cx+5,y0,CW-10,SLOTS.length*RH,5,'#c3c3c8','#b0b0b5');if(!p)continue;const L=wrap(p.name,CW-12,NF);let ly=py+DT+8+LH/2;L.forEach(l=>{tx(l,cx+CW/2,ly,NF,'#eee','center');ly+=LH});
    tx(abs?'OFF':p.role,cx+CW/2,ly+4,(W1?'700 13px ':'700 11px ')+F,abs?'#888':p.role==='CES'?'#e0b0b0':'#9ab','center');
    if(!abs&&ok()){const r=S.Z[p.id][d];let s=0;while(s<SLOTS.length){const v=r[s];let j=s;while(j+1<SLOTS.length&&r[j+1]===v)j++;
-     const y=y0+s*RH+2+(v==='FIN'?-RH/2:0),h=(j-s+1)*RH-4+(v==='FIN'?RH/2:(r[j+1]==='FIN'?-RH/2:0));if(v&&presentAt(p,d,SLOTS[s])){const C=CC[v];rr(cx+5,y,CW-10,h,5,C[0],C[2]);const lab=LAB[v];let fs=W1?14:11;g.font='700 '+fs+'px '+F;while(g.measureText(lab).width>CW-16&&fs>7){fs--;g.font='700 '+fs+'px '+F}if(h>=fs+2)tx(lab,cx+CW/2,y+h/2,'700 '+fs+'px '+F,C[1],'center')}else{g.fillStyle='#16161a';g.fillRect(cx+5,y,CW-10,h)}s=j+1}}}
+     const y=y0+s*RH,h=(j-s+1)*RH-(p.role==='CES'&&j===SLOTS.length-2&&!r[j+1]?RH/2:0);if(v&&presentAt(p,d,SLOTS[s])){const C=CC[v];rr(cx+5,y,CW-10,h,5,C[0],C[2]);const lab=LAB[v];let fs=W1?14:11;g.font='700 '+fs+'px '+F;while(g.measureText(lab).width>CW-16&&fs>7){fs--;g.font='700 '+fs+'px '+F}if(h>=fs+2)tx(lab,cx+CW/2,y+h/2,'700 '+fs+'px '+F,C[1],'center')}else{g.fillStyle='#16161a';g.fillRect(cx+5,y,CW-10,h)}s=j+1}}}
 });
  let lx=PAD,ly=H-30;[['FLOOR','FLOOR'],['PIPE','PIPE'],['BACKUP','BACKUP FLOOR'],['CLEAN','PIPE/CLEAN'],['PAUSE','PAUSE']].forEach(([v,l])=>{rr(lx,ly-11,22,22,4,CC[v][0],CC[v][2]);tx(l,lx+30,ly,'600 14px '+F,'#ccc');g.font='600 14px '+F;lx+=50+g.measureText(l).width});
  tx('Horaires 9h00–18h30',W-PAD,ly,'400 13px '+F,'#777','right');
