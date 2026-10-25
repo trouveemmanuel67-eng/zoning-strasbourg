@@ -1,0 +1,261 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Zoning d'équipe – Strasbourg</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#eee;
+background:#0b0b0d repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 9px);min-height:100vh;padding:18px 20px}
+header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:30px;font-weight:600;color:#fff}.sub{color:#9a9aa2;font-size:14px;margin-top:4px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:#16161a;border:1px solid #2e2e35;color:#eee;border-radius:9px;padding:9px 13px;font:inherit;font-size:14px;cursor:pointer}
+.btn:hover{border-color:#55555f}.nav{display:flex;border:1px solid #2e2e35;border-radius:9px;overflow:hidden}.nav .btn{border:0;border-radius:0}
+.nav .btn+.btn{border-left:1px solid #2e2e35}.red{background:#3a1d21;border-color:#6b3a40;color:#ead6d8;font-weight:600}
+.ico{width:40px;padding:9px 0;text-align:center}
+.wrap{border:1px solid #26262c;border-radius:12px;overflow:auto;background:rgba(10,10,12,.6)}
+.cal{display:grid;min-width:max-content}.hc{position:sticky;left:0;background:#0d0d10;z-index:3;border-right:1px solid #222}
+.dh{text-align:center;font-weight:600;font-size:13px;letter-spacing:.5px;padding:10px 0 4px;border-left:1px solid #222;border-bottom:1px solid #222}
+.dh small{display:block;font-weight:400;color:#888;font-size:10px;margin-top:3px;display:flex}.dh small span{min-width:0;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 2px}
+.dim{color:#666}.col{position:relative;border-left:1px solid #222;background:repeating-linear-gradient(#26262c 0 1px,#0000 1px 56px)}
+.hr{position:absolute;right:8px;font-size:11px;color:#8a8a92;transform:translateY(-7px)}
+.card{position:absolute;border-radius:5px;border:1px solid;box-shadow:none;padding:5px 6px;font-size:11px;overflow:hidden;cursor:pointer}
+.card:hover{filter:brightness(.95)}.card b{font-size:11px;font-weight:700}.card .t{opacity:.85;margin:2px 0;font-size:10px}
+.g{}.hr.hh{font-size:9px;color:#666}.wc{display:flex;align-items:center;justify-content:center;padding:0!important}.wc .t,.wc .av,.wc .nm{display:none}.wc b{font-size:10px!important;white-space:nowrap}.wdh{font-size:11px;letter-spacing:0;white-space:normal;padding:8px 3px 4px;line-height:1.25}.wlg{margin-top:14px;font-size:13px;color:#ccc}.wlg i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin:0 6px 0 16px;border:1px solid}.absc{position:absolute;left:3px;right:3px;border-radius:5px;background:#c3c3c8;border:1px solid #b0b0b5}
+.FLOOR{background:#cfe6d4;color:#1d3a27;border-color:#a9cdb2!important}
+.PIPE{background:#ef8f8f;color:#3d0b0b;border-color:#d96a6a!important}
+.CLEAN{background:#f3dde3;color:#4a2530;border-color:#e3bfc9!important}
+.PAUSE{background:#33ccff;color:#06263a;border-color:#12a9e0!important}
+.BACKUP{background:#fff3b0;color:#4a3b00;border-color:#e6cf5c!important}
+.wc.BACKUP b{white-space:normal!important;text-align:center;line-height:1.1}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.av{display:inline-flex;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.25);color:inherit;border:1px solid currentColor;opacity:.85;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin-right:4px;vertical-align:middle}
+.nm{white-space:nowrap}.warnline{position:absolute;left:0;right:0;height:28px;background:rgba(160,60,60,.12);border-top:1px solid #7a3b3b;pointer-events:none}
+table{border-collapse:collapse;font-size:12px}td,th{border:1px solid #2a2a30;padding:3px 4px;text-align:center}
+.c{border:1px solid #0b0b0d;width:50px;height:26px;cursor:pointer;font-size:9px;font-weight:700}
+
+.off{background:repeating-linear-gradient(45deg,#16161a 0 4px,#0d0d10 4px 8px);cursor:default}.warn{background:#4a2326;color:#e7c9cb}
+.tabs .btn.on{background:#2a2a32;border-color:#777}h3{font-weight:600;color:#fff}
+#panel{position:fixed;top:0;right:0;height:100%;width:min(920px,96vw);background:#111114;border-left:1px solid #333;padding:20px;overflow:auto;transform:translateX(105%);transition:.25s;z-index:20;box-shadow:-20px 0 40px #000a}
+#panel.open{transform:none}input,select{background:#1a1a1f;color:#eee;border:1px solid #333;border-radius:6px;padding:4px;font:inherit;font-size:12px}
+input[type=text]{width:150px}input[type=time]{width:86px;color-scheme:dark}#filt{display:none}
+.legend span{margin-right:14px;font-size:12px;color:#aaa}
+@media print{.FLOOR{background:#d7e8dc!important;color:#1d3326!important}.PIPE{background:#d3ecf2!important;color:#16343c!important}.CLEAN{background:#e8f6f8!important;color:#16343c!important}.PAUSE{background:#33ccff!important;color:#06263a!important}.BACKUP{background:#fff3b0!important;color:#4a3b00!important}.warn{background:#f3d4d4!important;color:#600!important}td,th{color:#000}@page{size:landscape;margin:8mm}body{background:#fff;color:#000;padding:0}.np,#panel{display:none!important}#tableV{display:block!important}#calV{display:none!important}
+td,th{border-color:#999}.off{background:#eee}.PAUSE{background:#33ccff;color:#06263a}h3,h2{color:#000}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.dpan{border:1px solid #34343c;border-radius:12px;background:#0f0f12;overflow:hidden}.wkend .dtitle{color:#888}
+.dtitle{font-size:16px;font-weight:600;color:#fff;padding:10px 14px;border-bottom:1px solid #2a2a30;background:#141418}.dtitle span{color:#888;font-weight:400;font-size:13px}
+.wgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.fc{background-color:#121216}
+.fcell{position:absolute;left:4px;right:4px;border-radius:4px;font-size:11px;color:#9aa;display:flex;align-items:center;justify-content:center;border:1px solid #2a2a30}
+#calV{border:0;background:none}.cal{min-width:0}
+@media print{.ptab{page-break-after:always}}
+header{flex-direction:column;align-items:center;text-align:center}header>div:first-child{width:100%;text-align:center}header .bar{justify-content:center}.legend{justify-content:center;text-align:center}.wlg{text-align:center}.dtitle{text-align:center}
+</style></head><body>
+<header><div><h1>Zoning d'équipe</h1><div class="sub" id="sub"></div></div>
+<div class="bar np"><div class="nav"><button class="btn" onclick="wk(-7)">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" onclick="wk(7)">›</button></div>
+<input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
+<select id="filt" onchange="S.filter=this.value;save();render()"></select>
+<button class="btn ico" title="Filtrer par collaborateur" onclick="filt.style.display=filt.style.display==='inline-block'?'none':'inline-block'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eee" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></button>
+<button class="btn ico" title="Présences et réglages" onclick="panel.classList.add('open')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eee" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+<button class="btn" id="vbtn" onclick="S.table=!S.table;save();render()">Vue tableau</button>
+<button class="btn" onclick="xlsx()" title="Export Excel (données)" style="font-size:11px;padding:4px 8px;opacity:.65">xlsx</button><button class="btn" onclick="csv()" title="Export CSV (données)" style="font-size:11px;padding:4px 8px;opacity:.65">csv</button>
+<button class="btn" id="jpgbtn" onclick="jpg()" title="Télécharger une image (JPEG) identique à la vue affichée" style="background:#2f4a3a;border-color:#3f6150;color:#fff;font-weight:700">⬇ Télécharger l'image</button><button class="btn red" onclick="gen()">＋ Générer le zoning</button></div></header>
+<div class="legend np"><span><i class="dot" style="background:#4f7a62"></i>FLOOR</span><span><i class="dot" style="background:#4a7a88"></i>PIPE</span><span><i class="dot" style="background:#e6cf5c"></i>BACKUP FLOOR</span><span><i class="dot" style="background:#6a929c"></i>PIPE/CLEAN</span><span><i class="dot" style="background:#5a5c62"></i>PAUSE</span><span>Clic sur une carte ou une case : FLOOR → PIPE → BACKUP FLOOR → PAUSE → PIPE/CLEAN → vide</span></div>
+<div id="calV" class="np" style="margin-top:10px"></div>
+<div id="tableV"><div class="tabs np" id="tabs" style="margin:10px 0"></div><div id="grid" class="wrap" style="padding:8px"></div></div><div id="tot"></div>
+<div id="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Présences (planning Teams)</h3><button class="btn" onclick="panel.classList.remove('open')">Fermer ✕</button></div>
+<label><input type="checkbox" id="sun"> Afficher le dimanche</label>
+<label style="margin-left:20px">Minimum sur le FLOOR : <input type="number" id="minF" min="0" value="2" style="width:50px"></label>
+<div id="pres" style="margin-top:12px;overflow:auto"></div><button class="btn" style="margin-top:10px" onclick="addP()">+ Ajouter un collaborateur</button></div>
+<script>
+/*ALGO-START*/
+const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const SLOTS=[];for(let m=540;m<1110;m+=30)SLOTS.push(m); // 9h00..18h00 (fin 18h30)
+const toM=t=>{const[a,b]=t.split(':');return +a*60+ +b};
+const fmt=m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
+function presentAt(p,d,m){const h=p.days[d];return !!h&&!h.absent} // tous cadres : présent toute la journée (9h00-18h30) ou absent
+function generate(team,nDays,minFloor){
+  const Z={};team.forEach(p=>Z[p.id]=DAYS.slice(0,nDays).map(()=>SLOTS.map(()=>null)));
+  const bal={},balP={},balB={};team.forEach(p=>{bal[p.id]=0;balP[p.id]=0;balB[p.id]=0}); // floor - pipe (en créneaux)
+  const ces=team.filter(p=>p.role==='CES'),sas=team.filter(p=>p.role!=='CES');
+  // jour PIPE du CES : lundi sinon mardi sinon 1er jour présent
+  const cesPipeDay={},usedPD={};ces.forEach(p=>{const ok=d=>presentAt(p,d,600);let d=[0,1].find(d=>ok(d)&&!usedPD[d]);if(d===undefined)d=[0,1].find(ok); // 2 CES : PIPE l'un lundi, l'autre mardi si possible
+    if(d===undefined)d=[...Array(nDays).keys()].find(d=>presentAt(p,d,600)&&!usedPD[d]);if(d===undefined)d=[...Array(nDays).keys()].find(d=>presentAt(p,d,600));cesPipeDay[p.id]=d;usedPD[d]=1});
+  for(let d=0;d<nDays;d++){
+    const pres=p=>SLOTS.map(m=>presentAt(p,d,m));
+    team.forEach(p=>{const pr=pres(p);SLOTS.forEach((m,i)=>{if(pr[i]&&m<600)Z[p.id][d][i]='CLEAN'})});
+    // pauses (1h) : CES 12h30 (12h00 le jour où il fait 2h de PIPE 10h-12h, pour éviter un reste de 30 min), SA étalés 12h00/12h30/13h00
+    const occ={720:0,750:0,780:0,810:0},pst={};
+    const setB=(p,st)=>{const i=SLOTS.indexOf(st);if(presentAt(p,d,st)&&presentAt(p,d,st+30)){Z[p.id][d][i]='PAUSE';Z[p.id][d][i+1]='PAUSE';occ[st]++;occ[st+30]++;pst[p.id]=i;return true}return false};
+    const cP=ces.filter(p=>presentAt(p,d,720)&&presentAt(p,d,810));
+    if(cP.length>=2){ // 2 CES présents : 12h00-13h00 et 13h00-14h00, jamais de chevauchement ; celui qui fait PIPE ce jour prend 12h00, sinon alternance
+      let e=cP.findIndex(p=>cesPipeDay[p.id]===d);if(e<0)e=d%2;const first=cP[e],second=cP[1-e];setB(first,720);setB(second,780);
+      cP.slice(2).forEach(p=>[750,720,780].some(st=>setB(p,st)))}
+    else ces.forEach(p=>{const pd=cesPipeDay[p.id]===d;(pd?[720,750,780]:[750,720,780]).some(st=>setB(p,st))});
+    sas.forEach(p=>{const sc=st=>Math.max(occ[st],occ[st+30])*10+occ[st]+occ[st+30];const opts=[720,780,750].sort((a,b)=>sc(a)-sc(b));opts.some(st=>setB(p,st))});
+    // CES : FLOOR sauf 2h PIPE (10h-12h) le jour choisi
+    ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&!Z[p.id][d][i]){
+      Z[p.id][d][i]=(cesPipeDay[p.id]===d&&m>=600&&m<720)?'PIPE':'FLOOR'}}));
+    // SA : chaque jour un temps de FLOOR, UN bloc PIPE et un bloc BACKUP FLOOR (hors 9-10h et pause), blocs ≥ 1h.
+    // ≤ 2 SA en PIPE en même temps, idéalement 1 seul en BACKUP ; BACKUP ne compte pas dans le minimum FLOOR.
+    // 2 SA présents : rotation complémentaire à 17h00 (l'un FLOOR, l'autre PIPE, puis échange).
+    const saP=sas.filter(p=>presentAt(p,d,600)),N=SLOTS.length,two=saP.length===2,R17=SLOTS.indexOf(1020);
+    const runsOk=r=>{let i=2;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&j===i)return false;i=j+1}return true};
+    const cnt=(r,v)=>r.reduce((a,x,i)=>a+(i>=2&&x===v),0);
+    const blocks=(r,v)=>{const w=r.slice(2).filter(x=>x!=='PAUSE');return w.filter((x,i)=>x===v&&w[i-1]!==v).length};
+    const cands=p=>{const base=Z[p.id][d],out=[];
+      const mk=(a,lp,c,lb)=>{const r=base.slice();for(let i=2;i<N;i++)if(!r[i])r[i]=(i>=a&&i<a+lp)?'PIPE':(i>=c&&i<c+lb)?'BACKUP':'FLOOR';return r};
+      for(let a=2;a<N;a++)for(const lp of [2,3,4,5])for(let c=2;c<N;c++)for(const lb of [2,3,4]){if(a+lp>N||c+lb>N||(c<a+lp&&a<c+lb))continue;
+        const r=mk(a,lp,c,lb);if(!runsOk(r)||blocks(r,'PIPE')!==1||blocks(r,'BACKUP')!==1||cnt(r,'PIPE')<2||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
+        if(two&&!(r[R17]===r[R17+1]&&r[R17+1]===r[N-1]&&(r[R17]==='FLOOR'||r[R17]==='PIPE')&&r[R17-1]!==r[R17]))continue;
+        out.push(r)}return out};
+    const C={};saP.forEach(p=>C[p.id]=cands(p));
+    const mbP=saP.reduce((a,q)=>a+balP[q.id],0)/(saP.length||1),mbB=saP.reduce((a,q)=>a+balB[q.id],0)/(saP.length||1);
+    const tP=4,tB=Math.min(4,Math.max(2,Math.round(15/(saP.length||1))));
+    const plan={};
+    const fixedF=i=>team.filter(q=>!saP.includes(q)&&Z[q.id][d][i]==='FLOOR').length;
+    const score=()=>{let sc=0;for(let i=2;i<N;i++){let f=fixedF(i),pp=0,bb=0;saP.forEach(q=>{const v=plan[q.id][i];if(v==='FLOOR')f++;if(v==='PIPE')pp++;if(v==='BACKUP')bb++});
+        if(d!==5||true)sc+=Math.max(0,pp-2)*1e5;sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*60}
+      if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e4}
+      saP.forEach(q=>{const r=plan[q.id];sc+=(cnt(r,'PIPE')-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)});return sc};
+    saP.forEach((p,k)=>{const cs=C[p.id];plan[p.id]=cs.length?cs[(k*7+d*3)%cs.length]:Z[p.id][d].map((v,i)=>v||(i>=2&&presentAt(p,d,SLOTS[i])?'FLOOR':v))});
+    for(let it=0;it<25;it++){let ch=false;saP.forEach(p=>{let best=null,keep=plan[p.id];C[p.id].forEach(r=>{plan[p.id]=r;const sc=score();if(!best||sc<best.sc)best={sc,r}});
+      plan[p.id]=best?best.r:keep;if(plan[p.id]!==keep)ch=true});if(!ch)break}
+    saP.forEach(p=>{Z[p.id][d]=plan[p.id];balP[p.id]+=cnt(plan[p.id],'PIPE');balB[p.id]+=cnt(plan[p.id],'BACKUP');bal[p.id]+=cnt(plan[p.id],'FLOOR')-cnt(plan[p.id],'PIPE')});
+  }
+  return Z;
+}
+function shortBlocks(Z,team,nDays){const out=[];team.forEach(p=>{for(let d=0;d<nDays;d++){const r=Z[p.id][d];let i=0;while(i<r.length){const v=r[i];let j=i;while(j+1<r.length&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&j===i)out.push({id:p.id,d,at:SLOTS[i],v});i=j+1}}});return out}
+function totals(Z,id){let f=0,p=0,b=0;Z[id].forEach(r=>r.forEach(v=>{if(v==='FLOOR')f+=.5;if(v==='PIPE'||v==='CLEAN')p+=.5;if(v==='BACKUP')b+=.5}));return{f,p,b}}
+if(typeof module!=='undefined')module.exports={generate,shortBlocks,totals,SLOTS,DAYS,presentAt};
+/*ALGO-END*/
+const MAXJ=6,nPres=(d,ex)=>S.team.filter(p=>p!==ex&&!p.days[d].absent).length;
+const LAB={FLOOR:'FLOOR',PIPE:'PIPE',BACKUP:'BACKUP FLOOR',PAUSE:'PAUSE',CLEAN:'PIPE/CLEAN'},CYC=['FLOOR','PIPE','BACKUP','PAUSE','CLEAN',null];
+const COL={BACKUP:'#fff3b0',FLOOR:'#cfe6d4',PIPE:'#ef8f8f',CLEAN:'#f3dde3',PAUSE:'#33ccff'};
+let S=JSON.parse(localStorage.getItem('zoningStras')||'null');
+const TEAM0=[['Manale','CES',3],['David','CES',4],['Hairdine','SA',0],['Francky','SA',1],['Manu','SA',2],['Tanguy','SA',5]]; // [nom, rôle, jour OFF par défaut (modifiable)]
+const mkTeam=()=>TEAM0.map(([n,r,o],k)=>({id:'p'+k,name:n,role:r,days:DAYS.map((_,d)=>({absent:d===6||d===o}))}));
+if(!S){S={team:mkTeam(),sun:false,min:2,Z:null,cur:0}}
+else{const gen=p=>/^Collaborateur\b/.test(p.name||'');
+ if(S.team.every(gen)){S.team=mkTeam();S.Z=null;S.filter='all'} // ancienne équipe générique -> vraie équipe
+ else{const used=new Set(S.team.map(p=>p.name));S.team.filter(gen).forEach(p=>{const f=TEAM0.find(([n,r])=>!used.has(n)&&r===p.role)||TEAM0.find(([n])=>!used.has(n));if(f){p.name=f[0];used.add(f[0])}})}
+ localStorage.setItem('zoningStras',JSON.stringify(S))}
+S.team.forEach(p=>p.days.forEach(x=>{delete x.start;delete x.end}));const save=()=>localStorage.setItem('zoningStras',JSON.stringify(S));const nD=()=>S.sun?7:6;
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function monday(d){d=new Date(d);d.setHours(12);d.setDate(d.getDate()-((d.getDay()+6)%7));return d}
+function setWeek(v){S.week=iso(monday(v?new Date(v+'T12:00'):new Date()));save();render()}
+function wk(n){if(!n)return setWeek();const d=new Date(S.week+'T12:00');d.setDate(d.getDate()+n);setWeek(iso(d))}
+if(!S.week)S.week=iso(monday(new Date()));if(!S.filter)S.filter='all';
+const dDate=i=>{const d=new Date(S.week+'T12:00');d.setDate(d.getDate()+i);return d};
+const ini=n=>n.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderPres(){sun.checked=S.sun;minF.value=S.min;let h='<table><tr><th>Nom</th><th>Poste</th>'+DAYS.slice(0,nD()).map(d=>'<th>'+d+'</th>').join('')+'<th></th></tr>';
+ S.team.forEach((p,i)=>{h+=`<tr><td><input type=text value="${esc(p.name)}" onchange="S.team[${i}].name=this.value;save();render()"></td>
+ <td><select onchange="S.team[${i}].role=this.value;save()"><option ${p.role==='SA'?'selected':''}>SA</option><option ${p.role==='CES'?'selected':''}>CES</option></select></td>`;
+ for(let d=0;d<nD();d++){const x=p.days[d];h+=`<td><label><input type=checkbox ${x.absent?'checked':''} onchange="setAbs(${i},${d},this)"> OFF</label><br></td>`}
+ h+=`<td><button class=btn onclick="if(confirm('Supprimer ?')){S.team.splice(${i},1);S.Z=null;save();renderPres();render()}">✕</button></td></tr>`});pres.innerHTML=h+'</table>'}
+function addP(){const full=[];S.team.push({id:'p'+Date.now(),name:'Collaborateur '+(S.team.length+1),role:'SA',days:DAYS.map((_,d)=>{const f=d!==6&&nPres(d)>=MAXJ;if(f&&d<nD())full.push(DAYS[d]);return{absent:d===6||f}})});save();renderPres();if(full.length)alert('Maximum '+MAXJ+' collaborateurs par jour : le nouveau collaborateur est marqué OFF le '+full.join(', ')+'.')}
+sun.onchange=()=>{S.sun=sun.checked;if(S.cur>=nD())S.cur=0;save();renderPres();render()};minF.onchange=()=>{S.min=+minF.value;save();render()};
+function gen(){const over=[];for(let d=0;d<nD();d++)if(nPres(d)>MAXJ)over.push(DAYS[d]+' ('+nPres(d)+')');if(over.length)return alert('Maximum '+MAXJ+' collaborateurs par jour. Trop de présents : '+over.join(', ')+'. Corrigez les présences (⚙).');S.Z=generate(S.team,nD(),S.min);save();render();const pb=[];shortBlocks(S.Z,S.team,nD()).forEach(b=>{const p=S.team.find(q=>q.id===b.id);pb.push('Bloc de 30 min impossible à éviter : '+(p?p.name:b.id)+' '+DAYS[b.d]+' '+fmt(b.at)+' ('+b.v+')')});for(let d=0;d<nD();d++){const ks=SLOTS.filter((m,i)=>m>=600&&S.team.filter(p=>S.Z[p.id]&&S.Z[p.id][d][i]==='FLOOR').length<S.min).map(fmt);if(ks.length)pb.push(DAYS[d]+' : FLOOR sous le minimum ('+S.min+') à '+ks.join(', ')+' — trop peu de présents pendant les pauses, ajustez à la main.')}if(pb.length)setTimeout(()=>alert(pb.join('\n')),50)}
+const ok=()=>S.Z&&S.team.every(p=>S.Z[p.id]&&S.Z[p.id].length>=nD());
+const fl=(d,i)=>S.team.filter(p=>S.Z[p.id][d][i]==='FLOOR').length;
+function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
+ sub.textContent=`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()} — Store Strasbourg`;wpick.value=S.week;
+ filt.innerHTML='<option value="all">Toute l\'équipe</option>'+S.team.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+ vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
+ renderCal();renderTable()}
+function colsFor(d){const T=S.team.filter(p=>S.filter==='all'||p.id===S.filter),pres=T.filter(p=>!p.days[d].absent).slice(0,MAXJ);
+ let base=[...pres,...T.filter(p=>p.days[d].absent)].slice(0,MAXJ);
+ const out=base.map(p=>({p,abs:p.days[d].absent}));while(out.length<MAXJ)out.push({p:null,abs:false});return out}
+function dayPanel(d,W){const RH=W?24:34,cols=colsFor(d),pr=cols.map(c=>c.p),L=MAXJ,
+ cw=(W?innerWidth/3:innerWidth)/ (L+1),narrow=cw<95,tiny=cw<40,dt=dDate(d),FC=46;
+ let h=`<div class="dpan ${d>=5?'wkend':''}"><div class="dtitle">${DAYS[d].toUpperCase()} ${dt.getDate()} <span>${dt.toLocaleDateString('fr-FR',{month:'long'})}</span></div>
+ <div class="cal" style="grid-template-columns:52px repeat(${L},minmax(0,1fr))${W?'':' '+FC+'px'}"><div class="hc dh" style="border-left:0"></div>`;
+ h+=cols.map(({p,abs})=>!p?'<div class="dh">&nbsp;<small>&nbsp;</small></div>':`<div class="dh${W?' wdh':''}" title="${esc(p.name)}">${esc(p.name)}<small style="justify-content:center;${W&&!abs?'color:'+(p.role==='CES'?'#e0b0b0':'#9ab')+';font-weight:700':''}">${abs?'OFF':p.role}</small></div>`).join('');
+ h+=(W?'':'<div class="dh">FLOOR</div>')+'<div class="hc" style="position:relative">'+[...SLOTS,1110].map((m,i)=>`<div class="hr${m%60?' hh':''}" style="top:${i*RH}px">${W?fmt(m):fmt(m).replace('h',':')}</div>`).join('')+'</div>';
+ const H=(SLOTS.length+1)*RH,bg=`background:repeating-linear-gradient(#34343c 0 1px,#0000 1px ${2*RH}px),repeating-linear-gradient(#1f1f25 0 1px,#0000 1px ${RH}px)`;
+ cols.forEach(({p,abs})=>{if(!p||abs){h+=`<div class="col" style="height:${H}px;position:relative"><div class="absc" style="top:2px;height:${SLOTS.length*RH-4}px"></div></div>`;return}h+=`<div class="col" style="height:${H}px;${bg}">`;if(ok()){const r=S.Z[p.id][d];let i=0;while(i<SLOTS.length){const v=r[i];let j=i;while(j+1<SLOTS.length&&r[j+1]===v)j++;
+   if(v&&presentAt(p,d,SLOTS[i])){const ht=(j-i+1)*RH-4,big=ht>(W?50:60);
+    h+=`<div class="card g ${v}${W?' wc':''}" style="top:${i*RH+2}px;left:3px;right:3px;height:${ht}px;padding:${narrow?'3px':'5px 7px'}" onclick="cycB('${p.id}',${d},${i},${j})" title="${esc(p.name)} — ${LAB[v]} ${fmt(SLOTS[i])}–${fmt(SLOTS[j]+30)}">
+    <b style="${tiny?'font-size:9px':''}">${W?LAB[v]:tiny?{FLOOR:'FLR',PIPE:'PIPE',CLEAN:'CLN',PAUSE:'PSE',BACKUP:'BKP'}[v]:narrow&&v==='CLEAN'?'CLEAN':LAB[v]}</b>${big?`<div class="t">${fmt(SLOTS[i])} – ${fmt(SLOTS[j]+30)}</div>${W?'':`<span class="av">${ini(p.name)}</span><span class="nm">${esc(p.name)}</span>`}`:(narrow?'':` <span class="t">${fmt(SLOTS[i])}</span>`)}</div>`}
+   i=j+1}}h+='</div>'});
+ if(!W)h+=`<div class="col fc" style="height:${H}px;${bg}">`+(ok()?SLOTS.map((m,i)=>{const n=fl(d,i),w=m>=600&&n<S.min;return `<div class="fcell ${w?'warn':''}" style="top:${i*RH+2}px;height:${RH-4}px" title="${n} sur le FLOOR${w?' — sous le minimum':''}">${n}${w?' ⚠':''}</div>`}).join(''):'')+'</div>';
+ return h+'</div></div>'}
+function renderCal(){const n=nD();if(S.calDay===undefined)S.calDay=0;if(S.calDay!=='w'&&S.calDay>=n)S.calDay=0;
+ let h='<div class="tabs" style="margin:0 0 12px">'+DAYS.slice(0,n).map((d,i)=>`<button class="btn ${S.calDay===i?'on':''}" onclick="S.calDay=${i};save();render()">${d.slice(0,3).toUpperCase()} ${dDate(i).getDate()}</button>`).join('')+`<button class="btn ${S.calDay==='w'?'on':''}" onclick="S.calDay='w';save();render()">Semaine</button></div>`;
+ if(!ok())h+='<p style="padding:14px;color:#aaa">Renseignez les présences (⚙) puis cliquez sur « Générer le zoning ».</p>';
+ if(S.calDay==='w'){h+='<div class="wgrid">';for(let d=0;d<n;d++)h+=dayPanel(d,true);h+='</div><div class="wlg">'+['FLOOR','PIPE','BACKUP','CLEAN','PAUSE'].map(v=>`<i class="${v}"></i>${LAB[v]}`).join('')+'</div>'}else h+=dayPanel(S.calDay,false);
+ calV.innerHTML=h}
+function cycB(id,d,i,j){const r=S.Z[id][d],nv=CYC[(CYC.indexOf(r[i])+1)%CYC.length];for(let k=i;k<=j;k++)r[k]=nv;save();render()}
+function renderTable(){tabs.innerHTML=DAYS.slice(0,nD()).map((d,i)=>`<button class="btn ${i===S.cur?'on':''}" onclick="S.cur=${i};save();render()">${d} ${dDate(i).getDate()}</button>`).join('');
+ if(!ok()){grid.innerHTML='<p>Cliquez sur « Générer le zoning ».</p>';tot.innerHTML='';return}
+ const d=S.cur;let h=`<h3>${DAYS[d]} ${dDate(d).toLocaleDateString('fr-FR')}</h3><table><tr><th>Collaborateur</th>`+SLOTS.map(m=>'<th>'+fmt(m)+'</th>').join('')+'</tr>';
+ ordD(d).forEach(p=>{const o=p.days[d].absent;h+=`<tr><td style="text-align:left"><b>${esc(p.name)}</b> (${o?'OFF':p.role})</td>`;SLOTS.forEach((m,i)=>{const v=S.Z[p.id][d][i];
+  h+=presentAt(p,d,m)?`<td class="c ${v||''}" onclick="cycB('${p.id}',${d},${i},${i})">${v?LAB[v]:''}</td>`:'<td class="c off">OFF</td>'});h+='</tr>'});
+ h+='<tr><td><b>Nb FLOOR</b></td>'+SLOTS.map((m,i)=>{const n=fl(d,i),w=m>=600&&n<S.min;return `<td class="${w?'warn':''}">${n}${w?' ⚠':''}</td>`}).join('')+'</tr></table>';
+ grid.innerHTML=h;tot.innerHTML=''}
+function ordD(d){return [...S.team.filter(p=>!p.days[d].absent),...S.team.filter(p=>p.days[d].absent)]}
+function rows(){const out=[];for(let d=0;d<nD();d++){out.push([DAYS[d]+' '+dDate(d).toLocaleDateString('fr-FR'),...SLOTS.map(fmt)]);ordD(d).forEach(p=>out.push([p.name+' ('+(p.days[d].absent?'OFF':p.role)+')',...SLOTS.map((m,i)=>presentAt(p,d,m)?(LAB[S.Z[p.id][d][i]]||''):'OFF')]));out.push([])}return out}
+function csv(){if(!ok())return alert('Générez d\'abord le zoning.');const t='\ufeff'+rows().map(r=>r.map(c=>'"'+c+'"').join(';')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='Zoning Strasbourg '+S.week+'.csv';a.click()}
+function xlsx(){if(!ok())return alert('Générez d\'abord le zoning.');if(typeof XLSX==='undefined'){alert('Excel indisponible hors connexion : export CSV.');return csv()}
+ const r=rows(),ws=XLSX.utils.aoa_to_sheet(r),col={'FLOOR':'3CB44B','PIPE':'00D0E0','PAUSE':'AAAAAA','PIPE/CLEAN':'7FE8F0'};
+ r.forEach((row,y)=>row.forEach((v,x)=>{const c=ws[XLSX.utils.encode_cell({r:y,c:x})];if(c&&col[v])c.s={fill:{fgColor:{rgb:col[v]}},alignment:{horizontal:'center'}}}));
+ ws['!cols']=[{wch:32},...SLOTS.map(()=>({wch:10}))];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Zoning');XLSX.writeFile(wb,'Zoning Strasbourg '+S.week+'.xlsx')}
+window.onbeforeprint=()=>{if(!ok())return;tableV.style.display='';const c=S.cur;let h='';for(let d=0;d<nD();d++){S.cur=d;renderTable();h+='<div class="ptab">'+grid.innerHTML+'</div>'}S.cur=c;grid.innerHTML=h};window.onafterprint=render;window.onresize=()=>{clearTimeout(window._r);window._r=setTimeout(render,150)};
+if(location.hash.startsWith('#demo')&&!S.Z)gen();if(location.hash==='#demo-w')S.calDay='w';
+renderPres();render();
+
+const CC={FLOOR:['#cfe6d4','#1d3a27','#a9cdb2'],PIPE:['#ef8f8f','#3d0b0b','#d96a6a'],CLEAN:['#f3dde3','#4a2530','#e3bfc9'],PAUSE:['#33ccff','#06263a','#12a9e0'],BACKUP:['#fff3b0','#4a3b00','#e6cf5c']};
+function jpgDays(){const n=nD();if(S.table)return [S.cur<n?S.cur:0];return S.calDay==='w'?[...Array(n).keys()]:[S.calDay<n?S.calDay:0]}
+function setAbs(i,d,el){const p=S.team[i];if(!el.checked&&nPres(d,p)>=MAXJ){alert('Maximum '+MAXJ+' collaborateurs par jour : '+DAYS[d]+' en compte déjà '+MAXJ+'. Marquez d\'abord quelqu\'un OFF ce jour-là.');el.checked=true;return}p.days[d].absent=el.checked;save();renderPres()}
+function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?26:20,TW=58,NC=MAXJ,PERROW=W1?1:3,PAD=24,GAP=22,TOP=W1?96:90,DT=40;
+ const F='"Segoe UI",Arial,sans-serif';
+ const ppl=d=>S.team.filter(p=>(S.filter==='all'||p.id===S.filter)&&!p.days[d].absent).slice(0,MAXJ);
+ const mc=document.createElement('canvas').getContext('2d');
+ const wrap=(t,w,f)=>{mc.font=f;const out=[];let cur='';t.split(/\s+/).forEach(x=>{const tt=cur?cur+' '+x:x;if(mc.measureText(tt).width<=w||!cur)cur=tt;else{out.push(cur);cur=x}});if(cur)out.push(cur);return out};
+ const NF=(W1?'600 15px ':'600 13px ')+F,LH=W1?18:16;
+ let maxL=1;days.forEach(d=>colsFor(d).forEach(({p})=>p&&(maxL=Math.max(maxL,wrap(p.name,CW-12,NF).length))));
+ const HH=maxL*LH+(W1?26:22)+8,PH=DT+HH+SLOTS.length*RH+22,PW=TW+NC*CW+16;
+ const rowsN=Math.ceil(days.length/PERROW),cols=Math.min(PERROW,days.length);
+ const W=PAD*2+cols*PW+(cols-1)*GAP,H=TOP+rowsN*PH+(rowsN-1)*GAP+56;
+ const c=document.createElement('canvas'),k=2;c.width=W*k;c.height=H*k;const g=c.getContext('2d');g.scale(k,k);
+ g.fillStyle='#0b0b0d';g.fillRect(0,0,W,H);g.textBaseline='middle';
+ const tx=(t,x,y,f,col,al)=>{g.font=f;g.fillStyle=col;g.textAlign=al||'left';g.fillText(t,x,y)};
+ const rr=(x,y,w,h,r,fill,st)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.fillStyle=fill;g.fill();if(st){g.strokeStyle=st;g.lineWidth=1;g.stroke()}};
+ const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
+ tx('Zoning Store Strasbourg',W/2,34,'700 28px '+F,'#fff','center');
+ tx(W1?`${DAYS[days[0]]} ${dDate(days[0]).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`:`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()}`,W/2,68,'400 18px '+F,'#aaa','center');
+ days.forEach((d,n)=>{const px=PAD+(n%PERROW)*(PW+GAP),py=TOP+Math.floor(n/PERROW)*(PH+GAP),cols=colsFor(d),dt=dDate(d);
+  rr(px,py,PW,PH,12,'#0f0f12','#34343c');rr(px,py,PW,DT,12,'#141418');g.fillStyle='#141418';g.fillRect(px+1,py+DT-12,PW-2,12);
+  const ttl=DAYS[d].toUpperCase()+' '+dt.getDate(),mo=dt.toLocaleDateString('fr-FR',{month:'long'});g.font='700 19px '+F;const w1=g.measureText(ttl).width;g.font='400 14px '+F;const tX=px+(PW-w1-8-g.measureText(mo).width)/2;tx(ttl,tX,py+DT/2,'700 19px '+F,'#fff');g.font='700 19px '+F;
+  tx(mo,tX+8+w1,py+DT/2+1,'400 14px '+F,'#888');
+  const x0=px+8+TW,y0=py+DT+HH;
+  g.strokeStyle='#2a2a30';g.beginPath();g.moveTo(px+8,y0);g.lineTo(px+PW-8,y0);g.stroke();
+  [...SLOTS,1110].forEach((m,i)=>{const y=y0+i*RH;{g.strokeStyle=m%60?'#1f1f25':'#34343c';g.beginPath();g.moveTo(x0,y);g.lineTo(px+PW-8,y);g.stroke()}
+   tx(fmt(m),x0-8,y,m%60?(W1?'400 11px ':'400 9px ')+F:(W1?'600 13px ':'600 11px ')+F,m%60?'#777':'#999','right')});
+  for(let i=0;i<NC;i++){const cx=x0+i*CW,p=cols[i].p,abs=cols[i].abs;g.strokeStyle='#22222a';g.beginPath();g.moveTo(cx,py+DT+6);g.lineTo(cx,y0+SLOTS.length*RH+6);g.stroke();
+   if(!p||abs)rr(cx+5,y0+2,CW-10,SLOTS.length*RH-4,5,'#c3c3c8','#b0b0b5');if(!p)continue;const L=wrap(p.name,CW-12,NF);let ly=py+DT+8+LH/2;L.forEach(l=>{tx(l,cx+CW/2,ly,NF,'#eee','center');ly+=LH});
+   tx(abs?'OFF':p.role,cx+CW/2,ly+4,(W1?'700 13px ':'700 11px ')+F,abs?'#888':p.role==='CES'?'#e0b0b0':'#9ab','center');
+   if(!abs&&ok()){const r=S.Z[p.id][d];let s=0;while(s<SLOTS.length){const v=r[s];let j=s;while(j+1<SLOTS.length&&r[j+1]===v)j++;
+     const y=y0+s*RH+2,h=(j-s+1)*RH-4;if(v&&presentAt(p,d,SLOTS[s])){const C=CC[v];rr(cx+5,y,CW-10,h,5,C[0],C[2]);const lab=LAB[v];let fs=W1?14:11;g.font='700 '+fs+'px '+F;while(g.measureText(lab).width>CW-16&&fs>7){fs--;g.font='700 '+fs+'px '+F}if(h>=fs+2)tx(lab,cx+CW/2,y+h/2,'700 '+fs+'px '+F,C[1],'center')}else{g.fillStyle='#16161a';g.fillRect(cx+5,y,CW-10,h)}s=j+1}}}
+});
+ let lx=PAD,ly=H-30;[['FLOOR','FLOOR'],['PIPE','PIPE'],['BACKUP','BACKUP FLOOR'],['CLEAN','PIPE/CLEAN'],['PAUSE','PAUSE']].forEach(([v,l])=>{rr(lx,ly-11,22,22,4,CC[v][0],CC[v][2]);tx(l,lx+30,ly,'600 14px '+F,'#ccc');g.font='600 14px '+F;lx+=50+g.measureText(l).width});
+ tx('Horaires 9h00–18h30',W-PAD,ly,'400 13px '+F,'#777','right');
+ return c}
+function jpg(){if(!ok())return alert('Générez d\'abord le zoning.');const days=jpgDays(),dd=x=>String(x.getDate()).padStart(2,'0')+'-'+String(x.getMonth()+1).padStart(2,'0');
+ const name=days.length>1?'Zoning Strasbourg semaine du '+dd(dDate(0))+'.jpg':'Zoning Strasbourg '+DAYS[days[0]]+' '+dd(dDate(days[0]))+'.jpg';
+ const dl=b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
+ snapView().then(c=>c.toBlob(dl,'image/jpeg',0.92)).catch(e=>{console.warn('snapshot DOM impossible, rendu canvas',e);drawZ(days).toBlob(dl,'image/jpeg',0.92)})}
+// Capture fidèle de la vue affichée : clone du DOM avec styles calculés inline -> SVG foreignObject -> canvas (100 % hors ligne)
+function snapView(){return new Promise((res,rej)=>{try{
+ const src=S.table?tableV:calV,W=Math.ceil(document.body.clientWidth),bodyCS=getComputedStyle(document.body);
+ const wrap=document.createElement('div');wrap.style.cssText=`position:absolute;left:-99999px;top:0;width:${W}px;padding:${bodyCS.padding};background:${bodyCS.backgroundColor};box-sizing:border-box`;
+ const hd=document.querySelector('header').cloneNode(true);hd.querySelectorAll('.bar,.np').forEach(e=>e.remove());const v=src.cloneNode(true);v.style.display='';
+ v.querySelectorAll('.tabs,button,.np:not(#calV)').forEach(e=>{if(!e.closest('.dpan'))e.remove()});
+ wrap.append(hd,v);document.body.appendChild(wrap);
+ const all=(a,b)=>{const cs=getComputedStyle(a);let t='';for(let k=0;k<cs.length;k++){const n=cs[k];t+=n+':'+cs.getPropertyValue(n)+';'}b.setAttribute('style',t);b.removeAttribute('class');b.removeAttribute('onclick');[...a.children].forEach((c,i)=>all(c,b.children[i]))};
+ const out=wrap.cloneNode(true);all(wrap,out);const H=Math.ceil(wrap.scrollHeight);wrap.remove();
+ out.style.position='static';out.style.left='0';out.style.margin='0';
+ const xml=new XMLSerializer().serializeToString(out);
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject x="0" y="0" width="100%" height="100%">${xml}</foreignObject></svg>`;
+ const img=new Image();img.onload=()=>{try{const k=2,c=document.createElement('canvas');c.width=W*k;c.height=H*k;const g=c.getContext('2d');g.fillStyle=bodyCS.backgroundColor;g.fillRect(0,0,c.width,c.height);g.scale(k,k);g.drawImage(img,0,0);c.toDataURL('image/jpeg',.1);res(c)}catch(e){rej(e)}};
+ img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){rej(e)}})}
+addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();jpg()}});
+</script></body></html>
