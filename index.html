@@ -103,7 +103,7 @@ function generate(team,nDays,minFloor){
     const blocks=(r,v)=>{const w=r.slice(2).filter(x=>x!=='PAUSE');return w.filter((x,i)=>x===v&&w[i-1]!==v).length};
     const cands=p=>{const base=Z[p.id][d],out=[];
       const mk=(a,lp,c,lb)=>{const r=base.slice();for(let i=2;i<N;i++)if(!r[i])r[i]=(i>=a&&i<a+lp)?'PIPE':(i>=c&&i<c+lb)?'BACKUP':'FLOOR';return r};
-      for(let a=2;a<N;a++)for(const lp of [2,3,4,5])for(let c=2;c<N;c++)for(const lb of [2,3,4]){if(a+lp>N||c+lb>N||(c<a+lp&&a<c+lb))continue;
+      for(let a=2;a<N;a++)for(const lp of [2,3,4,5,6,7,8,9,10])for(let c=2;c<N;c++)for(const lb of [2,3,4,5,6,7,8]){if(a+lp>N||c+lb>N||(c<a+lp&&a<c+lb))continue;
         const r=mk(a,lp,c,lb);if(!runsOk(r)||blocks(r,'PIPE')!==1||blocks(r,'BACKUP')!==1||cnt(r,'PIPE')<2||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
         if(two&&!(r[R17]===r[R17+1]&&r[R17+1]===r[N-1]&&(r[R17]==='FLOOR'||r[R17]==='PIPE')&&r[R17-1]!==r[R17]))continue;
         out.push(r)}return out};
@@ -113,19 +113,29 @@ function generate(team,nDays,minFloor){
     const plan={};
     const fixedF=i=>team.filter(q=>!saP.includes(q)&&Z[q.id][d][i]==='FLOOR').length;
     const score=()=>{let sc=0;for(let i=2;i<N;i++){let f=fixedF(i),pp=0,bb=0;saP.forEach(q=>{const v=plan[q.id][i];if(v==='FLOOR')f++;if(v==='PIPE')pp++;if(v==='BACKUP')bb++});
-        if(d!==5||true)sc+=Math.max(0,pp-2)*1e5;sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*60}
+        const sf=saP.filter(q=>plan[q.id][i]==='FLOOR').length;sc+=Math.max(0,sf-saFloorCap(d))*2e5+Math.max(0,pp-2)*1e5;sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*3e4}
       if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e4}
       saP.forEach(q=>{const r=plan[q.id];sc+=(cnt(r,'PIPE')-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)});return sc};
-    saP.forEach((p,k)=>{const cs=C[p.id];plan[p.id]=cs.length?cs[(k*7+d*3)%cs.length]:Z[p.id][d].map((v,i)=>v||(i>=2&&presentAt(p,d,SLOTS[i])?'FLOOR':v))});
+    // recherche locale avec plusieurs départs (graine déterministe), on garde le meilleur plan
+    let seed=d*9973+saP.length*31+1;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;let bestPlan=null,bestSc=Infinity;
+    for(let rs=0;rs<RESTARTS;rs++){
+    saP.forEach((p,k)=>{const cs=C[p.id];plan[p.id]=cs.length?cs[rs?Math.floor(rnd()*cs.length):(k*7+d*3)%cs.length]:Z[p.id][d].map((v,i)=>v||(i>=2&&presentAt(p,d,SLOTS[i])?'FLOOR':v))});
     for(let it=0;it<25;it++){let ch=false;saP.forEach(p=>{let best=null,keep=plan[p.id];C[p.id].forEach(r=>{plan[p.id]=r;const sc=score();if(!best||sc<best.sc)best={sc,r}});
       plan[p.id]=best?best.r:keep;if(plan[p.id]!==keep)ch=true});if(!ch)break}
+    const sc=score();if(sc<bestSc){bestSc=sc;bestPlan={...plan}}if(bestSc<1e3)break}
+    Object.assign(plan,bestPlan);
     saP.forEach(p=>{Z[p.id][d]=plan[p.id];balP[p.id]+=cnt(plan[p.id],'PIPE');balB[p.id]+=cnt(plan[p.id],'BACKUP');bal[p.id]+=cnt(plan[p.id],'FLOOR')-cnt(plan[p.id],'PIPE')});
   }
   return Z;
 }
+// règle FLOOR SA : lun-ven au plus 1 SA en FLOOR à la fois, samedi au plus 2 (BACKUP ne compte pas)
+const RESTARTS=12;
+function saFloorCap(d){return d===5?2:1}
+// avertissement minimum FLOOR : pas d'alerte si le plafond SA est atteint (la règle SA prime)
+function floorWarn(Z,team,d,i,min){const n=team.filter(q=>Z[q.id]&&Z[q.id][d][i]==='FLOOR').length;if(SLOTS[i]<600||n>=min)return false;const sf=team.filter(q=>q.role!=='CES'&&Z[q.id]&&Z[q.id][d][i]==='FLOOR').length;return sf<saFloorCap(d)}
 function shortBlocks(Z,team,nDays){const out=[];team.forEach(p=>{for(let d=0;d<nDays;d++){const r=Z[p.id][d];let i=0;while(i<r.length){const v=r[i];let j=i;while(j+1<r.length&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&j===i)out.push({id:p.id,d,at:SLOTS[i],v});i=j+1}}});return out}
 function totals(Z,id){let f=0,p=0,b=0;Z[id].forEach(r=>r.forEach(v=>{if(v==='FLOOR')f+=.5;if(v==='PIPE'||v==='CLEAN')p+=.5;if(v==='BACKUP')b+=.5}));return{f,p,b}}
-if(typeof module!=='undefined')module.exports={generate,shortBlocks,totals,SLOTS,DAYS,presentAt};
+if(typeof module!=='undefined')module.exports={saFloorCap,floorWarn,generate,shortBlocks,totals,SLOTS,DAYS,presentAt};
 /*ALGO-END*/
 const MAXJ=6,nPres=(d,ex)=>S.team.filter(p=>p!==ex&&!p.days[d].absent).length;
 const LAB={FLOOR:'FLOOR',PIPE:'PIPE',BACKUP:'BACKUP FLOOR',PAUSE:'PAUSE',CLEAN:'PIPE/CLEAN'},CYC=['FLOOR','PIPE','BACKUP','PAUSE','CLEAN',null];
@@ -154,7 +164,8 @@ function renderPres(){sun.checked=S.sun;minF.value=S.min;let h='<table><tr><th>N
  h+=`<td><button class=btn onclick="if(confirm('Supprimer ?')){S.team.splice(${i},1);S.Z=null;save();renderPres();render()}">✕</button></td></tr>`});pres.innerHTML=h+'</table>'}
 function addP(){const full=[];S.team.push({id:'p'+Date.now(),name:'Collaborateur '+(S.team.length+1),role:'SA',days:DAYS.map((_,d)=>{const f=d!==6&&nPres(d)>=MAXJ;if(f&&d<nD())full.push(DAYS[d]);return{absent:d===6||f}})});save();renderPres();if(full.length)alert('Maximum '+MAXJ+' collaborateurs par jour : le nouveau collaborateur est marqué OFF le '+full.join(', ')+'.')}
 sun.onchange=()=>{S.sun=sun.checked;if(S.cur>=nD())S.cur=0;save();renderPres();render()};minF.onchange=()=>{S.min=+minF.value;save();render()};
-function gen(){const over=[];for(let d=0;d<nD();d++)if(nPres(d)>MAXJ)over.push(DAYS[d]+' ('+nPres(d)+')');if(over.length)return alert('Maximum '+MAXJ+' collaborateurs par jour. Trop de présents : '+over.join(', ')+'. Corrigez les présences (⚙).');S.Z=generate(S.team,nD(),S.min);save();render();const pb=[];shortBlocks(S.Z,S.team,nD()).forEach(b=>{const p=S.team.find(q=>q.id===b.id);pb.push('Bloc de 30 min impossible à éviter : '+(p?p.name:b.id)+' '+DAYS[b.d]+' '+fmt(b.at)+' ('+b.v+')')});for(let d=0;d<nD();d++){const ks=SLOTS.filter((m,i)=>m>=600&&S.team.filter(p=>S.Z[p.id]&&S.Z[p.id][d][i]==='FLOOR').length<S.min).map(fmt);if(ks.length)pb.push(DAYS[d]+' : FLOOR sous le minimum ('+S.min+') à '+ks.join(', ')+' — trop peu de présents pendant les pauses, ajustez à la main.')}if(pb.length)setTimeout(()=>alert(pb.join('\n')),50)}
+function gen(){const over=[];for(let d=0;d<nD();d++)if(nPres(d)>MAXJ)over.push(DAYS[d]+' ('+nPres(d)+')');if(over.length)return alert('Maximum '+MAXJ+' collaborateurs par jour. Trop de présents : '+over.join(', ')+'. Corrigez les présences (⚙).');S.Z=generate(S.team,nD(),S.min);save();render();const pb=[];shortBlocks(S.Z,S.team,nD()).forEach(b=>{const p=S.team.find(q=>q.id===b.id);pb.push('Bloc de 30 min impossible à éviter : '+(p?p.name:b.id)+' '+DAYS[b.d]+' '+fmt(b.at)+' ('+b.v+')')});for(let d=0;d<nD();d++){const kp=SLOTS.filter((m,i)=>S.team.filter(p=>p.role!=='CES'&&S.Z[p.id]&&S.Z[p.id][d][i]==='PIPE').length>2).map(fmt);if(kp.length)pb.push(DAYS[d]+' : plus de 2 SA en PIPE à '+kp.join(', ')+' — inévitable avec max '+saFloorCap(d)+' SA en FLOOR et 1 en BACKUP FLOOR (trop de SA présents).')}
+ for(let d=0;d<nD();d++){const ks=SLOTS.filter((m,i)=>floorWarn(S.Z,S.team,d,i,S.min)).map(fmt);if(ks.length)pb.push(DAYS[d]+' : FLOOR sous le minimum ('+S.min+') à '+ks.join(', ')+' — trop peu de présents pendant les pauses, ajustez à la main.')}if(pb.length)setTimeout(()=>alert(pb.join('\n')),50)}
 const ok=()=>S.Z&&S.team.every(p=>S.Z[p.id]&&S.Z[p.id].length>=nD());
 const fl=(d,i)=>S.team.filter(p=>S.Z[p.id][d][i]==='FLOOR').length;
 function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
@@ -177,7 +188,7 @@ function dayPanel(d,W){const RH=W?24:34,cols=colsFor(d),pr=cols.map(c=>c.p),L=MA
     h+=`<div class="card g ${v}${W?' wc':''}" style="top:${top0}px;left:3px;right:3px;height:${ht}px;padding:${narrow?'3px':'5px 7px'}" onclick="cycB('${p.id}',${d},${i},${j})" title="${esc(p.name)} — ${LAB[v]} ${fmt(t0)}–${fmt(t1)}">
     <b style="${tiny?'font-size:9px':''}">${W?LAB[v]:tiny?{FLOOR:'FLR',PIPE:'PIPE',CLEAN:'CLN',PAUSE:'PSE',BACKUP:'BKP'}[v]:narrow&&v==='CLEAN'?'CLEAN':LAB[v]}</b>${big?`<div class="t">${fmt(t0)} – ${fmt(t1)}</div>${W?'':`<span class="av">${ini(p.name)}</span><span class="nm">${esc(p.name)}</span>`}`:(narrow?'':` <span class="t">${fmt(SLOTS[i])}</span>`)}</div>`}
    i=j+1}}h+=gl(RH)+'</div>'});
- if(!W)h+=`<div class="col fc" style="height:${H}px;${bg}">`+(ok()?SLOTS.map((m,i)=>{const n=fl(d,i),w=m>=600&&n<S.min;return `<div class="fcell ${w?'warn':''}" style="top:${i*RH+2}px;height:${RH-4}px" title="${n} sur le FLOOR${w?' — sous le minimum':''}">${n}${w?' ⚠':''}</div>`}).join(''):'')+gl(RH)+'</div>';
+ if(!W)h+=`<div class="col fc" style="height:${H}px;${bg}">`+(ok()?SLOTS.map((m,i)=>{const n=fl(d,i),w=floorWarn(S.Z,S.team,d,i,S.min);return `<div class="fcell ${w?'warn':''}" style="top:${i*RH+2}px;height:${RH-4}px" title="${n} sur le FLOOR${w?' — sous le minimum':''}">${n}${w?' ⚠':''}</div>`}).join(''):'')+gl(RH)+'</div>';
  return h+'</div></div>'}
 function gl(RH){return '<div class="gl">'+[...SLOTS,1110].map((m,i)=>`<i class="${m%60?'gh':'gH'}" style="top:${i*RH}px"></i>`).join('')+'</div>'}
 function togP(id,d){const p=S.team.find(q=>q.id===id);if(!p)return;if(p.days[d].absent&&nPres(d,p)>=MAXJ)return alert('Maximum '+MAXJ+' collaborateurs par jour : '+DAYS[d]+' en compte déjà '+MAXJ+'.');p.days[d].absent=!p.days[d].absent;
@@ -193,7 +204,7 @@ function renderTable(){tabs.innerHTML=DAYS.slice(0,nD()).map((d,i)=>`<button cla
  const d=S.cur;let h=`<h3>${DAYS[d]} ${dDate(d).toLocaleDateString('fr-FR')}</h3><table><tr><th>Collaborateur</th>`+SLOTS.map(m=>'<th>'+fmt(m)+'</th>').join('')+'</tr>';
  ordD(d).forEach(p=>{const o=p.days[d].absent;h+=`<tr><td style="text-align:left"><b>${esc(p.name)}</b> (${o?'OFF':p.role})</td>`;SLOTS.forEach((m,i)=>{const v=S.Z[p.id][d][i];
   h+=presentAt(p,d,m)?`<td class="c ${v||''}" onclick="cycB('${p.id}',${d},${i},${i})">${v?LAB[v]:''}</td>`:'<td class="c off">OFF</td>'});h+='</tr>'});
- h+='<tr><td><b>Nb FLOOR</b></td>'+SLOTS.map((m,i)=>{const n=fl(d,i),w=m>=600&&n<S.min;return `<td class="${w?'warn':''}">${n}${w?' ⚠':''}</td>`}).join('')+'</tr></table>';
+ h+='<tr><td><b>Nb FLOOR</b></td>'+SLOTS.map((m,i)=>{const n=fl(d,i),w=floorWarn(S.Z,S.team,d,i,S.min);return `<td class="${w?'warn':''}">${n}${w?' ⚠':''}</td>`}).join('')+'</tr></table>';
  grid.innerHTML=h;tot.innerHTML=''}
 function ordD(d){return [...S.team.filter(p=>!p.days[d].absent),...S.team.filter(p=>p.days[d].absent)]}
 function rows(){const out=[];for(let d=0;d<nD();d++){out.push([DAYS[d]+' '+dDate(d).toLocaleDateString('fr-FR'),...SLOTS.map(fmt)]);ordD(d).forEach(p=>out.push([p.name+' ('+(p.days[d].absent?'OFF':p.role)+')',...SLOTS.map((m,i)=>presentAt(p,d,m)?(LAB[S.Z[p.id][d][i]]||''):'OFF')]));out.push([])}return out}
