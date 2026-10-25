@@ -108,8 +108,8 @@ function generate(team,nDays,minFloor){
   const bal={},balP={},balB={};team.forEach(p=>{bal[p.id]=0;balP[p.id]=0;balB[p.id]=0}); // floor - pipe (en créneaux)
   const ces=team.filter(p=>p.role==='CES'),sas=team.filter(p=>p.role!=='CES');
   // jour PIPE du CES : lundi sinon mardi sinon 1er jour présent
-  const cesPipeDay={},usedPD={};ces.forEach(p=>{const ok=d=>presentAt(p,d,600);let d=[1,2].find(d=>ok(d)&&!usedPD[d]);if(d===undefined)d=[1,2].find(ok); // 2 CES : PIPE l'un mardi, l'autre mercredi si possible ; JAMAIS le lundi
-    if(d===undefined)d=[...Array(nDays).keys()].find(d=>d>0&&presentAt(p,d,600)&&!usedPD[d]);if(d===undefined)d=[...Array(nDays).keys()].find(d=>d>0&&presentAt(p,d,600));if(d===undefined)d=-1;cesPipeDay[p.id]=d;usedPD[d]=1});
+  const cesPipeDay={},usedPD={};ces.forEach(p=>{const ok=d=>presentAt(p,d,600);let d=[1,2].find(d=>ok(d)&&!usedPD[d]); // 2 CES : PIPE l'un mardi, l'autre mercredi si possible ; JAMAIS le lundi, jamais 2 CES en PIPE le même jour (donc jamais en même temps)
+    if(d===undefined)d=[...Array(nDays).keys()].find(d=>d>0&&presentAt(p,d,600)&&!usedPD[d]);if(d===undefined)d=-1;cesPipeDay[p.id]=d;usedPD[d]=1});
   for(let d=0;d<nDays;d++){
     const pres=p=>SLOTS.map(m=>presentAt(p,d,m));
     team.forEach(p=>{const pr=pres(p);SLOTS.forEach((m,i)=>{if(pr[i]&&m<600)Z[p.id][d][i]='CLEAN'})});
