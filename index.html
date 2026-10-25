@@ -108,9 +108,9 @@ function generate(team,nDays,minFloor){
   const Z={};team.forEach(p=>Z[p.id]=DAYS.slice(0,nDays).map(()=>SLOTS.map(()=>null)));
   const bal={},balP={},balB={};team.forEach(p=>{bal[p.id]=0;balP[p.id]=0;balB[p.id]=0}); // floor - pipe (en créneaux)
   const ces=team.filter(p=>p.role==='CES'),sas=team.filter(p=>p.role!=='CES');
-  // jour PIPE du CES : lundi sinon mardi sinon 1er jour présent
-  const cesPipeDay={},usedPD={};ces.forEach(p=>{const ok=d=>presentAt(p,d,600);let d=[1,2].find(d=>ok(d)&&!usedPD[d]); // 2 CES : PIPE l'un mardi, l'autre mercredi si possible ; JAMAIS le lundi, jamais 2 CES en PIPE le même jour (donc jamais en même temps)
-    if(d===undefined)d=[...Array(nDays).keys()].find(d=>d>0&&presentAt(p,d,600)&&!usedPD[d]);if(d===undefined)d=-1;cesPipeDay[p.id]=d;usedPD[d]=1});
+  // PIPE CES : uniquement le MARDI, 2h00 chacun si les 2 CES sont présents (10h-12h puis 14h-16h, jamais en même temps) ; 1 seul CES le mardi → pas de PIPE CES ; aucun autre jour
+  const cesPipe={},TUE=1;{const cT=ces.filter(p=>TUE<nDays&&[600,630,690,840,870,930].every(m=>presentAt(p,TUE,m)));if(cT.length>=2){cesPipe[cT[0].id]=600;cesPipe[cT[1].id]=840}}
+  const isPipeCES=(p,d,m)=>d===TUE&&cesPipe[p.id]!=null&&m>=cesPipe[p.id]&&m<cesPipe[p.id]+120;
   for(let d=0;d<nDays;d++){
     const pres=p=>SLOTS.map(m=>presentAt(p,d,m));
     team.forEach(p=>{const pr=pres(p);SLOTS.forEach((m,i)=>{if(pr[i]&&m<600)Z[p.id][d][i]='CLEAN'})});
@@ -119,15 +119,15 @@ function generate(team,nDays,minFloor){
     const setB=(p,st)=>{const i=SLOTS.indexOf(st);if(presentAt(p,d,st)&&presentAt(p,d,st+30)){Z[p.id][d][i]='PAUSE';Z[p.id][d][i+1]='PAUSE';occ[st]++;occ[st+30]++;pst[p.id]=i;return true}return false};
     const cP=ces.filter(p=>presentAt(p,d,720)&&presentAt(p,d,810));
     if(cP.length>=2){ // 2 CES présents : 12h00-13h00 et 13h00-14h00, jamais de chevauchement ; celui qui fait PIPE ce jour prend 12h00, sinon alternance
-      let e=cP.findIndex(p=>cesPipeDay[p.id]===d);if(e<0)e=d%2;const first=cP[e],second=cP[1-e];setB(first,720);setB(second,780);
+      let e=cP.findIndex(p=>d===TUE&&cesPipe[p.id]===600);if(e<0)e=d%2;const first=cP[e],second=cP[1-e];setB(first,720);setB(second,780);
       cP.slice(2).forEach(p=>[750,720,780].some(st=>setB(p,st)))}
-    else ces.forEach(p=>{const pd=cesPipeDay[p.id]===d;(pd?[720,750,780]:[750,720,780]).some(st=>setB(p,st))});
+    else ces.forEach(p=>{const pd=d===TUE&&cesPipe[p.id]===600;(pd?[720,750,780]:[750,720,780]).some(st=>setB(p,st))});
     // SA : pauses échelonnées entre SA (priorité) pour qu'au moins 1 SA reste au FLOOR de 12h00 à 14h00
     const so={720:0,750:0,780:0,810:0};
     sas.forEach(p=>{const sc=st=>Math.max(so[st],so[st+30])*1000+Math.max(occ[st],occ[st+30])*10+occ[st]+occ[st+30];const sb=setB;const setB2=st=>{const ok=sb(p,st);if(ok){so[st]++;so[st+30]++}return ok};const opts=[720,780,750].sort((a,b)=>sc(a)-sc(b));opts.some(st=>setB2(st))});
-    // CES : FLOOR sauf 2h PIPE (10h-12h) le jour choisi
+    // CES : FLOOR sauf 2h PIPE le mardi (10h-12h ou 14h-16h)
     ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&!Z[p.id][d][i]){
-      Z[p.id][d][i]=m>=1080?null:m===1050?'CLEAN15':(cesPipeDay[p.id]===d&&m>=600&&m<720)?'PIPE':'FLOOR'}})); // CES : CLEAN 17h30-17h45 (CLEAN15, seul bloc de 15 min, ne compte pas comme FLOOR) ; fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
+      Z[p.id][d][i]=m>=1080?null:m===1050?'CLEAN15':isPipeCES(p,d,m)?'PIPE':'FLOOR'}})); // CES : CLEAN 17h30-17h45 (CLEAN15, seul bloc de 15 min, ne compte pas comme FLOOR) ; fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
     // SA : jamais de retour sur un poste déjà fait : exactement UN bloc FLOOR, UN bloc PIPE, UN bloc BACKUP FLOOR par jour
     // (exception : 2 SA présents → dernière rotation FLOOR 17h00-18h30, 2e FLOOR autorisé) ; pause de préférence entre deux postes (hors 9-10h et pause), blocs ≥ 1h.
     // 12h00-14h00 : toujours ≥ 1 SA au FLOOR (pauses SA échelonnées) ; seul cas qui cède : tous les SA présents en pause au même moment (1 seul SA).
@@ -143,7 +143,8 @@ function generate(team,nDays,minFloor){
         const r=mk(a,lp,c,lb);const nf=blocks(r,'FLOOR');if(!runsOk(r)||blocks(r,'PIPE')!==1||blocks(r,'BACKUP')!==1||!(nf===1||(two&&nf===2&&r[R17]==='FLOOR'&&r[R17-1]!=='FLOOR'))||cnt(r,'PIPE')<2||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
         if(two&&!(r[R17]===r[R17+1]&&r[R17+1]===r[N-1]&&(r[R17]==='FLOOR'||r[R17]==='PIPE')&&r[R17-1]!==r[R17]))continue;
         out.push(r)}return out};
-    const C={};saP.forEach(p=>C[p.id]=cands(p));
+    // 1 seul SA présent : ni PIPE ni BACKUP FLOOR, FLOOR toute la journée (hors 9-10h et pause)
+    const C={};saP.forEach(p=>C[p.id]=saP.length===1?[Z[p.id][d].map((v,i)=>v||(i>=2&&presentAt(p,d,SLOTS[i])?'FLOOR':v))]:cands(p));
     const mbP=saP.reduce((a,q)=>a+balP[q.id],0)/(saP.length||1),mbB=saP.reduce((a,q)=>a+balB[q.id],0)/(saP.length||1);
     const tP=4,tB=Math.min(4,Math.max(2,Math.round(15/(saP.length||1))));
     const plan={};
