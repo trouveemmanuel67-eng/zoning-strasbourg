@@ -144,7 +144,7 @@ function generate(team,nDays,minFloor,keep){
     const blocks=(r,v)=>{const w=r.slice(2).filter(x=>x!=='PAUSE'&&x!=='EVENT');return w.filter((x,i)=>x===v&&w[i-1]!==v).length};
     const cands=p=>{const base=Z[p.id][d],out=[];
       const mk=(a,lp,c,lb)=>{const r=base.slice();for(let i=2;i<N;i++)if(!r[i])r[i]=(i>=a&&i<a+lp)?'PIPE':(i>=c&&i<c+lb)?'BACKUP':'FLOOR';return r};
-      for(let a=2;a<N;a++)for(const lp of [2,3,4,5,6,7,8])for(let c=2;c<N;c++)for(const lb of [2,3,4,5,6,7,8]){if(a+lp>N||c+lb>N||(c<a+lp&&a<c+lb))continue;
+      for(let a=2;a<N;a++)for(const lp of [2,3,4])for(let c=2;c<N;c++)for(const lb of [2,3,4,5,6,7,8,9,10,11,12]){if(a+lp>N||c+lb>N||(c<a+lp&&a<c+lb))continue;
         const r=mk(a,lp,c,lb);const nf=blocks(r,'FLOOR');if(!runsOk(r)||blocks(r,'PIPE')!==1||blocks(r,'BACKUP')!==1||!(nf===1||nf===2)||cnt(r,'PIPE')<2||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
         if(two&&!(r[R17]===r[R17+1]&&r[R17+1]===r[N-1]&&(r[R17]==='FLOOR'||r[R17]==='PIPE')&&r[R17-1]!==r[R17]))continue;
         out.push(r)}return out};
@@ -157,7 +157,7 @@ function generate(team,nDays,minFloor,keep){
     const score=()=>{let sc=0;for(let i=2;i<N;i++){let f=fixedF(i),pp=0,bb=0;saP.forEach(q=>{const v=plan[q.id][i];if(v==='FLOOR')f++;if(v==='PIPE')pp++;if(v==='BACKUP')bb++});
         const sf=saP.filter(q=>plan[q.id][i]==='FLOOR').length;sc+=Math.max(0,sf-saFloorCap(d))*(d<5?1e8:2e5)+Math.max(0,pp-2)*6e3;sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*6e3;if(SLOTS[i]>=720&&SLOTS[i]<840&&sf===0&&saP.some(q=>plan[q.id][i]!=='PAUSE'))sc+=3e5}
       if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e4}
-      saP.forEach(q=>{const r=plan[q.id];const pi=r.indexOf('PAUSE');if(pi>2&&r[pi-1]===r[pi+2])sc+=(r[pi-1]==='FLOOR'?5e4:900);/*FLOOR→pause→FLOOR : forte pénalité (préférence)*/sc+=(cnt(r,'PIPE')-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)+(!two&&blocks(r,'FLOOR')===2?3000:0);/*plafond 2h PIPE / 2h BACKUP par SA (souple si mathématiquement impossible)*/for(const v of ['PIPE','BACKUP']){const ex=Math.max(0,cnt(r,v)-CAP2H);sc+=ex*3e4+ex*ex*1.5e4}});return sc};
+      saP.forEach(q=>{const r=plan[q.id];const pi=r.indexOf('PAUSE');if(pi>2&&r[pi-1]===r[pi+2])sc+=(r[pi-1]==='FLOOR'?5e4:900);/*FLOOR→pause→FLOOR : forte pénalité (préférence)*/sc+=(cnt(r,'PIPE')-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)+(!two&&blocks(r,'FLOOR')===2?3000:0);/*plafond 2h PIPE / 2h BACKUP par SA (souple si mathématiquement impossible)*/{const ex=Math.max(0,cnt(r,'PIPE')-CAP2H);sc+=ex*1e9}/*PIPE SA : max 2h/jour STRICT ; BACKUP sans plafond*/});return sc};
     // recherche locale avec plusieurs départs (graine déterministe), on garde le meilleur plan
     let seed=d*9973+saP.length*31+1;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;let bestPlan=null,bestSc=Infinity;
     for(let rs=0;rs<RESTARTS||(bestSc>=1e8&&rs<90);rs++){
@@ -169,9 +169,9 @@ function generate(team,nDays,minFloor,keep){
     // réparation de dernier recours : en semaine jamais 2 SA au FLOOR (le SA en trop prolonge son PIPE/BACKUP voisin)
     if(d<5&&saP.length>1)for(let g=0;g<40;g++){let fixed=false;for(let i=2;i<N;i++){const fl=saP.filter(q=>plan[q.id][i]==='FLOOR');if(fl.length<=1)continue;
       const mid=SLOTS[i]>=720&&SLOTS[i]<840;const q=fl.map(x=>{const r=plan[x.id];const nb=[r[i-1],r[i+1]].find(v=>v==='PIPE'||v==='BACKUP');return {x,nb}}).sort((a,b)=>(b.nb?1:0)-(a.nb?1:0))[0];
-      const r=plan[q.x.id].slice();const pp=saP.filter(y=>plan[y.id][i]==='PIPE').length;r[i]=q.nb||(pp<2?'PIPE':'BACKUP');plan[q.x.id]=r;fixed=true}if(!fixed)break}
+      const r=plan[q.x.id].slice();const pp=saP.filter(y=>plan[y.id][i]==='PIPE').length;r[i]=(q.nb==='PIPE'&&cnt(r,'PIPE')<4)?'PIPE':'BACKUP';plan[q.x.id]=r;fixed=true}if(!fixed)break}
     // nettoyage : pas de bribe FLOOR de 30 min laissée par la réparation
-    if(d<5)saP.forEach(q=>{const r=plan[q.id].slice();for(let i=2;i<N;i++){if(r[i]!=='FLOOR'||r[i-1]==='FLOOR'||r[i+1]==='FLOOR')continue;const nb=[r[i-1],r[i+1]].find(v=>v==='PIPE'||v==='BACKUP');if(!nb)continue;
+    if(d<5)saP.forEach(q=>{const r=plan[q.id].slice();for(let i=2;i<N;i++){if(r[i]!=='FLOOR'||r[i-1]==='FLOOR'||r[i+1]==='FLOOR')continue;const nb=[r[i-1],r[i+1]].find(v=>v==='BACKUP'||(v==='PIPE'&&cnt(r,'PIPE')<4));if(!nb)continue;
       const mid=SLOTS[i]>=720&&SLOTS[i]<840;if(mid&&!saP.some(y=>y!==q&&plan[y.id][i]==='FLOOR'))continue;r[i]=nb}plan[q.id]=r});
     saP.forEach(p=>{Z[p.id][d]=plan[p.id];balP[p.id]+=cnt(plan[p.id],'PIPE');balB[p.id]+=cnt(plan[p.id],'BACKUP');bal[p.id]+=cnt(plan[p.id],'FLOOR')-cnt(plan[p.id],'PIPE')});
   }
