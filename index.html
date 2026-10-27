@@ -82,7 +82,7 @@ input,select{background:var(--ink);border-color:var(--line);color:var(--sand)}
 .card.CLEAN15{padding:0 6px!important;display:flex;align-items:center;overflow:hidden}.card.CLEAN15 b{font-size:10px;line-height:1;white-space:nowrap}.card.CLEAN15 .t{font-size:9px;margin-left:4px}
 .EVENT{background:repeating-linear-gradient(135deg,#d9a916 0 9px,#2e2f2f 9px 18px)!important;color:#fff;border-color:#1c1c1c!important;border-radius:2px!important;box-shadow:0 0 0 1px rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.7),0 0 14px rgba(0,0,0,.45)!important}.card.EVENT b,.card.EVENT .t,.card.EVENT .nm{background:rgba(20,20,20,.82);padding:1px 5px;border-radius:2px;color:#fff;text-shadow:none;display:inline-block}td.c.EVENT{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}.wlg i.EVENT,.legend i.EVENT{background:repeating-linear-gradient(135deg,#d9a916 0 3px,#2e2f2f 3px 6px)!important}.evbar{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0;font-size:12px;color:var(--sand,#ccc);letter-spacing:1px}.evbar select{background:#0b0a09;color:#eee;border:1px solid #6b5a33;padding:3px 4px;font-size:12px}
 @media print{.EVENT{background:repeating-linear-gradient(135deg,#d9a916 0 9px,#2e2f2f 9px 18px)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.pace{display:block;font-size:.78em;letter-spacing:2px;font-weight:600;opacity:.9;line-height:1.1;margin-top:1px;color:inherit}.card .pace{font-size:9px}.wc .pace{font-size:7.5px;letter-spacing:1.5px}.pace1{font-weight:600;letter-spacing:1px;font-size:.85em}td.c .pace{font-size:7px;letter-spacing:1px}@media print{.pace,.pace1{display:inline-block!important;color:inherit!important}.pace{display:block!important}}.wc.PIPE,.wc.BACKUP{flex-direction:column}.wc .pace{text-align:center;width:100%}</style></head><body>
+.pace{display:block;font-size:.78em;letter-spacing:2px;font-weight:600;opacity:.9;line-height:1.1;margin-top:1px;color:inherit}.card .pace{font-size:9px}.wc .pace{font-size:7.5px;letter-spacing:1.5px}.pace1{font-weight:600;letter-spacing:1px;font-size:.85em}td.c .pace{font-size:7px;letter-spacing:1px}@media print{.pace,.pace1{display:inline-block!important;color:inherit!important}.pace{display:block!important}}.wc.PIPE,.wc.BACKUP{flex-direction:column}.wc .pace{text-align:center;width:100%}</style><style>#bgl{position:fixed;inset:0;z-index:-1;background:#000 url(bg-moteurs.jpg) center 55%/cover no-repeat;pointer-events:none}#bgl:after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(8,8,10,.80),rgba(8,8,10,.72) 50%,rgba(8,8,10,.84))}html{background:#000}body{background:transparent!important}@media print{#bgl{display:none}}</style></head><body><div id="bgl"></div>
 <header><div><h1>Zoning d'équipe</h1><div class="sub" id="sub"></div></div>
 <div class="bar np"><div class="nav"><button class="btn" onclick="wk(-7)">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" onclick="wk(7)">›</button></div>
 <input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
@@ -321,6 +321,14 @@ function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?26:20,TW=58,NC
  let lx=PAD,ly=H-30;[['FLOOR','FLOOR'],['PIPE','PIPE · PACE'],['BACKUP','BACKUP FLOOR · PACE'],['CLEAN','PIPE/CLEAN · CLEAN'],['PAUSE','PAUSE'],['EVENT','EVENT']].forEach(([v,l])=>{rr(lx,ly-11,22,22,4,CC[v][0],CC[v][2]);tx(l,lx+30,ly,'600 14px '+F,'#ccc');g.font='600 14px '+F;lx+=50+g.measureText(l).width});
  tx('Horaires 9h00–18h30',W-PAD,ly,'400 13px '+F,'#777','right');
  return c}
+/*BG-START*/
+const BGI=new Image();const bgReady=new Promise(r=>{BGI.onload=()=>r(1);BGI.onerror=()=>r(0)});BGI.src='bg-moteurs.jpg';
+function bgComp(c){if(!BGI.naturalWidth)return c;const W=c.width,H=c.height,p=document.createElement('canvas');p.width=W;p.height=H;const g=p.getContext('2d');
+ const s=Math.max(W/BGI.naturalWidth,H/BGI.naturalHeight),w=BGI.naturalWidth*s,h=BGI.naturalHeight*s;g.drawImage(BGI,(W-w)/2,(H-h)*0.55,w,h);g.fillStyle='rgba(8,8,10,.74)';g.fillRect(0,0,W,H);
+ const a=c.getContext('2d').getImageData(0,0,W,H),b=g.getImageData(0,0,W,H),A=a.data,B=b.data;
+ for(let i=0;i<A.length;i+=4){const r=A[i],gg=A[i+1],bb=A[i+2],mx=Math.max(r,gg,bb);if(mx<44&&mx-Math.min(r,gg,bb)<14){const t=(44-mx)/44;for(let j=0;j<3;j++){const v=Math.max(A[i+j],B[i+j]);A[i+j]=A[i+j]+(v-A[i+j])*Math.min(1,t*1.6)}}}
+ c.getContext('2d').putImageData(a,0,0);return c}
+/*BG-END*/
 /*RECAP-START*/
 const RK=[['FLOOR','FLOOR',['FLOOR']],['BACKUP','BACKUP FLOOR',['BACKUP']],['PIPE','PIPE',['PIPE']],['CLEAN','PIPE/CLEAN',['CLEAN','CLEAN15']],['EVENT','EVENT',['EVENT']]];
 function recapRow(rows){const m={FLOOR:0,BACKUP:0,PIPE:0,CLEAN:0,EVENT:0};rows.forEach(r=>(r||[]).forEach(v=>{if(!v)return;const k=RK.find(x=>x[2].includes(v));if(k)m[k[0]]+=v==='CLEAN15'?15:30}));
@@ -355,7 +363,7 @@ function addRecap(c,days){const F='"Segoe UI",Arial,sans-serif',k=2,W=c.width/k,
 function jpg(){if(!ok())return alert('Générez d\'abord le zoning.');const days=jpgDays(),dd=x=>String(x.getDate()).padStart(2,'0')+'-'+String(x.getMonth()+1).padStart(2,'0');
  const name=days.length>1?'Zoning Strasbourg semaine du '+dd(dDate(0))+'.jpg':'Zoning Strasbourg '+DAYS[days[0]]+' '+dd(dDate(days[0]))+'.jpg';
  const dl=b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
- snapView().then(c=>addRecap(c,days).toBlob(dl,'image/jpeg',0.92)).catch(e=>{console.warn('snapshot DOM impossible, rendu canvas',e);addRecap(drawZ(days),days).toBlob(dl,'image/jpeg',0.92)})}
+ snapView().then(c=>bgReady.then(()=>bgComp(addRecap(c,days)).toBlob(dl,'image/jpeg',0.92))).catch(e=>{console.warn('snapshot DOM impossible, rendu canvas',e);bgReady.then(()=>bgComp(addRecap(drawZ(days),days)).toBlob(dl,'image/jpeg',0.92))})}
 // Capture fidèle de la vue affichée : clone du DOM avec styles calculés inline -> SVG foreignObject -> canvas (100 % hors ligne)
 function snapView(){return new Promise((res,rej)=>{try{
  const src=S.table?tableV:calV,W=Math.ceil(document.body.clientWidth),bodyCS=getComputedStyle(document.body);
