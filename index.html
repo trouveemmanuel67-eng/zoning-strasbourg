@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Zoning d'équipe – Strasbourg</title>
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>TEAM ZONING – Strasbourg</title><meta name="apple-mobile-web-app-title" content="TEAM ZONING">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#f2f2f4;-webkit-font-smoothing:antialiased;
@@ -83,7 +83,7 @@ input,select{background:var(--ink);border-color:var(--line);color:var(--sand)}
 .EVENT{background:repeating-linear-gradient(135deg,#d9a916 0 9px,#2e2f2f 9px 18px)!important;color:#fff;border-color:#1c1c1c!important;border-radius:2px!important;box-shadow:0 0 0 1px rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.7),0 0 14px rgba(0,0,0,.45)!important}.card.EVENT b,.card.EVENT .t,.card.EVENT .nm{background:rgba(20,20,20,.82);padding:1px 5px;border-radius:2px;color:#fff;text-shadow:none;display:inline-block}td.c.EVENT{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}.wlg i.EVENT,.legend i.EVENT{background:repeating-linear-gradient(135deg,#d9a916 0 3px,#2e2f2f 3px 6px)!important}.evbar{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0;font-size:12px;color:var(--sand,#ccc);letter-spacing:1px}.evbar select{background:#0b0a09;color:#eee;border:1px solid #6b5a33;padding:3px 4px;font-size:12px}
 @media print{.EVENT{background:repeating-linear-gradient(135deg,#d9a916 0 9px,#2e2f2f 9px 18px)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .pace{display:block;font-size:.78em;letter-spacing:2px;font-weight:600;opacity:.9;line-height:1.1;margin-top:1px;color:inherit}.card .pace{font-size:9px}.wc .pace{font-size:7.5px;letter-spacing:1.5px}.pace1{font-weight:600;letter-spacing:1px;font-size:.85em}td.c .pace{font-size:7px;letter-spacing:1px}@media print{.pace,.pace1{display:inline-block!important;color:inherit!important}.pace{display:block!important}}.wc.PIPE,.wc.BACKUP{flex-direction:column}.wc .pace{text-align:center;width:100%}</style><style>#bgl{position:fixed;inset:0;z-index:-1;background:#000 url(bg-moteurs.jpg) center 55%/cover no-repeat;pointer-events:none}#bgl:after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(8,8,10,.80),rgba(8,8,10,.72) 50%,rgba(8,8,10,.84))}html{background:#000}body{background:transparent!important}@media print{#bgl{display:none}}</style></head><body><div id="bgl"></div>
-<header><div><h1>Zoning d'équipe</h1><div class="sub" id="sub"></div></div>
+<header><div><h1>TEAM ZONING</h1><div class="sub" id="sub"></div></div>
 <div class="bar np"><div class="nav"><button class="btn" onclick="wk(-7)">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" onclick="wk(7)">›</button></div>
 <input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
 <select id="filt" onchange="S.filter=this.value;save();render()"></select>
@@ -302,7 +302,7 @@ function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?26:20,TW=58,NC
  const tx=(t,x,y,f,col,al)=>{g.font=f;g.fillStyle=col;g.textAlign=al||'left';g.fillText(t,x,y)};
  const rr=(x,y,w,h,r,fill,st)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.fillStyle=fill;g.fill();if(st){g.strokeStyle=st;g.lineWidth=1;g.stroke()}};
  const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
- tx('Zoning Store Strasbourg',W/2,34,'700 28px '+F,'#fff','center');
+ tx('TEAM ZONING',W/2,34,'700 28px '+F,'#fff','center');
  tx(W1?`${DAYS[days[0]]} ${dDate(days[0]).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`:`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()}`,W/2,68,'400 18px '+F,'#aaa','center');
  days.forEach((d,n)=>{const px=PAD+(n%PERROW)*(PW+GAP),py=TOP+Math.floor(n/PERROW)*(PH+GAP),cols=colsFor(d),dt=dDate(d);
   rr(px,py,PW,PH,12,'#0f0f12','#34343c');rr(px,py,PW,DT,12,'#141418');g.fillStyle='#1f1f1f';g.fillRect(px+1,py+DT-12,PW-2,12);
