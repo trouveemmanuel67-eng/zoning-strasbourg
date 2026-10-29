@@ -263,7 +263,7 @@ function togP(id,d,ev){const p=S.team.find(q=>q.id===id);if(!p)return;if(p.days[
  busy(1);PEND.add(d);clearTimeout(pendT);pendT=setTimeout(()=>requestAnimationFrame(()=>setTimeout(regenDays,0)),300)}
 render=(r=>function(){r.apply(this,arguments);evFill()})(render);
 function renderCal(){const n=nD();if(S.calDay===undefined)S.calDay=0;if(S.calDay!=='w'&&S.calDay>=n)S.calDay=0;
- let h='<div class="tabs" style="margin:0 0 12px">'+DAYS.slice(0,n).map((d,i)=>`<button class="btn ${S.calDay===i?'on':''}" onclick="S.calDay=${i};save();render()">${d.slice(0,3).toUpperCase()} ${dDate(i).getDate()}</button>`).join('')+`<button class="btn ${S.calDay==='w'?'on':''}" onclick="S.calDay='w';save();render()">Semaine</button></div>`;
+ let h='<div class="tabs" style="margin:0 0 12px;text-align:center">'+DAYS.slice(0,n).map((d,i)=>`<button class="btn ${S.calDay===i?'on':''}" onclick="S.calDay=${i};save();render()">${d.slice(0,3).toUpperCase()} ${dDate(i).getDate()}</button>`).join('')+`<button class="btn ${S.calDay==='w'?'on':''}" onclick="S.calDay='w';save();render()">Semaine</button></div>`;
  if(!ok())h+='<p style="padding:14px;color:#aaa">Renseignez les présences (⚙) puis cliquez sur « Générer le zoning ».</p>';
  if(S.calDay==='w'){h+='<div class="wgrid">';for(let d=0;d<n;d++)h+=dayPanel(d,true);h+='</div><div class="wlg">'+['FLOOR','PIPE','BACKUP','CLEAN','PAUSE','EVENT'].map(v=>`<i class="${v}"></i>${v==='CLEAN'?'PIPE/CLEAN · CLEAN':LAB[v]+(PACE[v]?' · PACE':'')}`).join('')+'</div>'}else h+=dayPanel(S.calDay,false);
  calV.innerHTML=h}
