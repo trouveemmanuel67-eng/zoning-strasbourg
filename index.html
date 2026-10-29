@@ -141,7 +141,7 @@ function generate(team,nDays,minFloor,keep){
     // ≤ 2 SA en PIPE en même temps, idéalement 1 seul en BACKUP ; BACKUP ne compte pas dans le minimum FLOOR.
     // 2 SA présents : rotation complémentaire à 17h00 (l'un FLOOR, l'autre PIPE, puis échange).
     const saP=sas.filter(p=>presentAt(p,d,600)),N=SLOTS.length,two=saP.length===2,R17=SLOTS.indexOf(1020);
-    /*RÈGLE heures pleines : un SA ne change de poste qu'à heure pile (xx:00) ; exception 18h-19h*/const hOk=r=>{for(let i=3;i<N;i++)if(i%2===1&&SLOTS[i]<1080&&r[i]!==r[i-1])return false;return true};
+    /*RÈGLE heures pleines : un SA ne change de poste qu'à heure pile (xx:00) ; aucune exception (CES non concernés)*/const hOk=r=>{for(let i=3;i<N;i++)if(i%2===1&&r[i]!==r[i-1])return false;return true};
     const runsOk=r=>{let i=2;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&j===i)return false;i=j+1}return true};
     const cnt=(r,v)=>r.reduce((a,x,i)=>a+(i>=2&&x===v),0);
     const blocks=(r,v)=>{const w=r.slice(2).filter(x=>x!=='PAUSE'&&x!=='EVENT');return w.filter((x,i)=>x===v&&w[i-1]!==v).length};
