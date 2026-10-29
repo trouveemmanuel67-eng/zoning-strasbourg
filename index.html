@@ -114,7 +114,7 @@ function generate(team,nDays,minFloor,keep){
   const bal={},balP={},balB={};team.forEach(p=>{bal[p.id]=0;balP[p.id]=0;balB[p.id]=0}); // floor - pipe (en créneaux)
   const ces=team.filter(p=>p.role==='CES'),sas=team.filter(p=>p.role!=='CES');
   // PIPE CES : uniquement le MARDI, 2h00 chacun si les 2 CES sont présents (10h-12h puis 14h-16h, jamais en même temps) ; 1 seul CES le mardi → pas de PIPE CES ; aucun autre jour
-  const cesPipe={},TUE=1;{const cT=ces.filter(p=>TUE<nDays&&[600,630,690,840,870,930].every(m=>presentAt(p,TUE,m)));if(cT.length>=2){cesPipe[cT[0].id]=600;cesPipe[cT[1].id]=840}}
+  const cesPipe={},TUE=1;/*PIPE CES mardi 2h supprimé (demande Emmanuel)*/
   const isPipeCES=(p,d,m)=>d===TUE&&cesPipe[p.id]!=null&&m>=cesPipe[p.id]&&m<cesPipe[p.id]+120;
   for(let d=0;d<nDays;d++){
     const pres=p=>SLOTS.map(m=>presentAt(p,d,m));
@@ -130,9 +130,10 @@ function generate(team,nDays,minFloor,keep){
     // SA : pauses échelonnées entre SA (priorité) pour qu'au moins 1 SA reste au FLOOR de 12h00 à 14h00
     const so={720:0,750:0,780:0,810:0};
     const sPr=sas.filter(p=>presentAt(p,d,720)&&presentAt(p,d,810)),late=sPr.length>1?sPr[d%sPr.length]:null;/*pauses-couv : tous à 12h sauf 1 SA à 13h (couverture FLOOR continue + FLOOR équitable)*/sas.forEach(p=>{const sc=st=>(sPr.includes(p)?(p===late?(st===780?0:1e6):(st===720?0:1e6)):0)+Math.max(so[st],so[st+30])*1000+Math.max(occ[st],occ[st+30])*10+occ[st]+occ[st+30];const sb=setB;const setB2=st=>{const ok=sb(p,st);if(ok){so[st]++;so[st+30]++}return ok};const opts=[720,780,750].sort((a,b)=>sc(a)-sc(b));opts.some(st=>setB2(st))});
-    // CES : FLOOR sauf 2h PIPE le mardi (10h-12h ou 14h-16h)
+    // CES : FLOOR ; PIPE David 1h au retour de pause (lun-ven, jours travaillés) ; PIPE Manale mardi et jeudi 14h30-15h30
+    const pipeCES=(p,m,i)=>{const n=String(p.name||'').trim().toLowerCase();if(n==='manale'||n==='manal')return (d===1||d===3)&&m>=870&&m<930;if(n==='david')return d<5&&pst[p.id]!=null&&i>=pst[p.id]+2&&i<pst[p.id]+4;return false};
     ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&!Z[p.id][d][i]){
-      Z[p.id][d][i]=m>=1080?null:m===1050?'CLEAN15':isPipeCES(p,d,m)?'PIPE':'FLOOR'}})); // CES : CLEAN 17h30-17h45 (CLEAN15, seul bloc de 15 min, ne compte pas comme FLOOR) ; fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
+      Z[p.id][d][i]=m>=1080?null:m===1050?'CLEAN15':pipeCES(p,m,i)?'PIPE':'FLOOR'}})); // CES : CLEAN 17h30-17h45 (CLEAN15, seul bloc de 15 min, ne compte pas comme FLOOR) ; fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
     // SA : jamais de retour sur un poste déjà fait : exactement UN bloc FLOOR, UN bloc PIPE, UN bloc BACKUP FLOOR par jour
     // (exception : 2 SA présents → dernière rotation FLOOR 17h00-18h30, 2e FLOOR autorisé) ; pause de préférence entre deux postes (hors 9-10h et pause), blocs ≥ 1h.
     // 12h00-14h00 : toujours ≥ 1 SA au FLOOR (pauses SA échelonnées) ; seul cas qui cède : tous les SA présents en pause au même moment (1 seul SA).
