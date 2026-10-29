@@ -366,7 +366,15 @@ function addRecap(c,days){const F='"Segoe UI",Arial,sans-serif',k=2,W=c.width/k,
 function jpg(){if(!ok())return alert('Générez d\'abord le zoning.');const days=jpgDays(),dd=x=>String(x.getDate()).padStart(2,'0')+'-'+String(x.getMonth()+1).padStart(2,'0');
  const name=days.length>1?'Zoning Strasbourg semaine du '+dd(dDate(0))+'.jpg':'Zoning Strasbourg '+DAYS[days[0]]+' '+dd(dDate(days[0]))+'.jpg';
  const dl=b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
- snapView().then(c=>bgReady.then(()=>bgComp(addRecap(c,days)).toBlob(dl,'image/jpeg',0.92))).catch(e=>{console.warn('snapshot DOM impossible, rendu canvas',e);bgReady.then(()=>bgComp(addRecap(drawZ(days),days)).toBlob(dl,'image/jpeg',0.92))})}
+ if(JB.busy)return;jbBusy();const fin=ok=>jbDone(ok),dl2=b=>{if(!b)return fin(false);dl(b);fin(true)};
+ snapView().then(c=>bgReady.then(()=>bgComp(c).toBlob(dl2,'image/jpeg',0.92))).catch(e=>{console.warn('snapshot DOM impossible, rendu canvas',e);bgReady.then(()=>bgComp(drawZ(days)).toBlob(dl2,'image/jpeg',0.92))}).catch(()=>fin(false))}
+// retour visuel du téléchargement (récap/pourcentages exclus de l'image)
+const JB={busy:false};
+function jbBtns(){return [...document.querySelectorAll('button[onclick^="jpg("]')]}
+function jbBusy(){JB.busy=true;if(!document.getElementById('jbcss')){const st=document.createElement('style');st.id='jbcss';st.textContent='@keyframes jbs{to{transform:rotate(360deg)}}.jbsp{display:inline-block;width:12px;height:12px;border:2px solid rgba(201,169,110,.35);border-top-color:#d4b26a;border-radius:50%;animation:jbs .8s linear infinite;vertical-align:-2px;margin-right:8px}';document.head.appendChild(st)}
+ jbBtns().forEach(b=>{if(b._h===undefined){b._h=b.innerHTML;b._s=b.getAttribute('style')||''}b.disabled=true;b.style.cssText=b._s+';background:#0b0a09;border-color:#c9a96e;color:#d4b26a;cursor:wait;opacity:1';b.innerHTML='<span class="jbsp"></span>Téléchargement…'})}
+function jbDone(ok){jbBtns().forEach(b=>{b.innerHTML=ok?'✓ Image téléchargée':'⚠ Échec du téléchargement';b.style.cssText=b._s+';background:#c9a96e;border-color:#d4b26a;color:#0b0a09;font-weight:700'});
+ setTimeout(()=>{jbBtns().forEach(b=>{b.innerHTML=b._h;b.setAttribute('style',b._s);b.disabled=false});JB.busy=false},2000)}
 // Capture fidèle de la vue affichée : clone du DOM avec styles calculés inline -> SVG foreignObject -> canvas (100 % hors ligne)
 function snapView(){return new Promise((res,rej)=>{try{
  const src=S.table?tableV:calV,W=Math.ceil(document.body.clientWidth),bodyCS=getComputedStyle(document.body);
