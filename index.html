@@ -266,6 +266,7 @@ function generate(team,nDays,minFloor,keep,pipeDays){
     const runsOk=r=>{let i=2;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&j===i)return false;i=j+1}return true};
     const cnt=(r,v)=>r.reduce((a,x,i)=>a+(i>=2&&x===v),0);
     const blocks=(r,v)=>{const w=r.slice(2).filter(x=>x!=='PAUSE'&&!isEv(x));return w.filter((x,i)=>x===v&&w[i-1]!==v).length};
+    /*blocs de 2h : une heure PIPE / FLOOR / BACKUP n'est acceptée qu'en bord de journée ou contre une pause*/const avoid1h=r=>{let n=0,i=2;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if((v==='PIPE'||v==='FLOOR'||v==='BACKUP')&&j-i===1&&j!==N-1&&r[i-1]!=='PAUSE'&&r[j+1]!=='PAUSE')n++;i=j+1}return n};
     /*PIPE +2h/semaine pour Emmanuel (Manu), lun-ven : +1h sur ses 2 premiers jours travaillés*/const isEm=q=>['manu','emmanuel'].includes(String(q.name||'').trim().toLowerCase());const emX=q=>{if(!isEm(q)||d>4)return 0;const wd=[0,1,2,3,4].filter(k=>presentAt(q,k,600));return wd.slice(0,2).includes(d)?2:0};const capP=q=>4+emX(q);
     const cands=p=>{const base=Z[p.id][d],out=[];
       const mk=(a,lp,c,lb)=>{const r=base.slice();for(let i=2;i<N;i++)if(!r[i])r[i]=(i>=a&&i<a+lp)?'PIPE':(i>=c&&i<c+lb)?'BACKUP':'FLOOR';return r};
@@ -284,7 +285,7 @@ function generate(team,nDays,minFloor,keep,pipeDays){
     const score=()=>{let sc=0;for(let i=2;i<N;i++){let f=fixedF(i),pp=0,bb=0;saP.forEach(q=>{const v=plan[q.id][i];if(v==='FLOOR')f++;if(v==='PIPE')pp++;if(v==='BACKUP')bb++});
         const sf=saP.filter(q=>plan[q.id][i]==='FLOOR').length;sc+=Math.max(0,sf-saFloorCap(d))*1e8+Math.max(0,pp-2)*6e3;/*RÈGLE samedi : jamais 2 personnes en PIPE ou PIPE/CLEAN au même moment (hors CLEAN d'ouverture 9h-10h)*/if(d===5&&SLOTS[i]>=720&&SLOTS[i]<840){const fb=team.filter(q=>!saP.includes(q)&&['FLOOR','BACKUP'].includes(Z[q.id][d][i])).length+saP.filter(q=>['FLOOR','BACKUP'].includes(plan[q.id][i])).length;sc+=Math.max(0,2-fb)*1e8}/*RÈGLE samedi 12h-14h : toujours au moins 2 personnes FLOOR ou BACKUP FLOOR*/if(d===5){const pc=team.filter(q=>!saP.includes(q)&&['PIPE','CLEAN'].includes(Z[q.id][d][i])).length+pp+saP.filter(q=>plan[q.id][i]==='CLEAN').length;sc+=Math.max(0,pc-1)*1e8}if(d===5&&SLOTS[i]>=600&&f<minFloor&&sf<saFloorCap(d)&&!(SLOTS[i]>=1050&&sf>=1))sc+=1e8;/*samedi : FLOOR minimum garanti*/sc+=Math.max(0,minFloor-f)*1e3+Math.max(0,bb-1)*6e3;{const fs=saP.some(q=>plan[q.id][i]==='FLOOR'),av=saP.filter(q=>plan[q.id][i]&&plan[q.id][i]!=='PAUSE'&&!isEv(plan[q.id][i])).length;if(i>=2&&fs&&bb===0&&av>=2&&!(d===5&&SLOTS[i]>=720&&SLOTS[i]<840))sc+=1e8}/*backup-obligatoire*/if(i>=2&&sf===0&&saP.some(q=>plan[q.id][i]!=='PAUSE'&&!isEv(plan[q.id][i])))sc+=1e8}/*couv-SA*/
       if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e7}
-      saP.forEach(q=>{const r=plan[q.id];if(retOff(q)&&saP.length>1){const mx=Math.max(...saP.filter(y=>y!==q).map(y=>cnt(plan[y.id],'PIPE')-emX(y)));sc+=Math.max(0,mx-cnt(r,'PIPE')+1)*3e6+(r.indexOf('PIPE')>5?2e3:0)}/*retour d'off : le plus de PIPE du jour, de préférence le matin*/if(d===5)sc+=satShortRow(r)*1e8+(cnt(r,'PIPE')<4?3e7:0);/*samedi : 2h de PIPE par SA si possible*//*samedi : aucun poste < 2h*/const pi=r.indexOf('PAUSE');if(pi>2&&r[pi-1]===r[pi+2])sc+=(r[pi-1]==='FLOOR'?5e4:900);/*FLOOR→pause→FLOOR : forte pénalité (préférence)*/if(emX(q))sc+=Math.max(0,4+emX(q)-cnt(r,'PIPE'))*2e7;/*+2h PIPE Manu : quasi obligatoire*/sc+=(cnt(r,'PIPE')-emX(q)-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)+(!two&&blocks(r,'FLOOR')===2?3000:0);/*plafond 2h PIPE / 2h BACKUP par SA (souple si mathématiquement impossible)*/{const ex=Math.max(0,cnt(r,'PIPE')-CAP2H-emX(q)-(d===5&&r[N-1]==='PIPE'?1:0));/*samedi : PIPE 16h-18h30 accepté*/sc+=ex*1e9}/*PIPE SA : max 2h/jour STRICT ; BACKUP sans plafond*/});/*même temps de FLOOR pour tous les SA du jour*/if(saP.length>1){const fl=saP.map(q=>cnt(plan[q.id],'FLOOR')+emX(q));const g=Math.max(...fl)-Math.min(...fl);sc+=g*2e5+g*g*5e4}/*puis même temps de PIPE (BACKUP = variable d'ajustement)*/if(saP.length>1){const pl=saP.map(q=>cnt(plan[q.id],'PIPE')-emX(q));const g=Math.max(...pl)-Math.min(...pl);sc+=g*2e4+g*g*1e4}return sc};
+      saP.forEach(q=>{const r=plan[q.id];sc+=avoid1h(r)*1e6;if(retOff(q)&&saP.length>1){const mx=Math.max(...saP.filter(y=>y!==q).map(y=>cnt(plan[y.id],'PIPE')-emX(y)));sc+=Math.max(0,mx-cnt(r,'PIPE')+1)*3e6+(r.indexOf('PIPE')>5?2e3:0)}/*retour d'off : le plus de PIPE du jour, de préférence le matin*/if(d===5)sc+=satShortRow(r)*1e8+(cnt(r,'PIPE')<4?3e7:0);/*samedi : 2h de PIPE par SA si possible*//*samedi : aucun poste < 2h*/const pi=r.indexOf('PAUSE');if(pi>2&&r[pi-1]===r[pi+2])sc+=(r[pi-1]==='FLOOR'?5e4:900);/*FLOOR→pause→FLOOR : forte pénalité (préférence)*/if(emX(q))sc+=Math.max(0,4+emX(q)-cnt(r,'PIPE'))*2e7;/*+2h PIPE Manu : quasi obligatoire*/sc+=(cnt(r,'PIPE')-emX(q)-(tP-(balP[q.id]-mbP)/2))**2*3+(cnt(r,'BACKUP')-(tB-(balB[q.id]-mbB)/2))**2*3+(cnt(r,'FLOOR')<4?20:0)+(!two&&blocks(r,'FLOOR')===2?3000:0);/*plafond 2h PIPE / 2h BACKUP par SA (souple si mathématiquement impossible)*/{const ex=Math.max(0,cnt(r,'PIPE')-CAP2H-emX(q)-(d===5&&r[N-1]==='PIPE'?1:0));/*samedi : PIPE 16h-18h30 accepté*/sc+=ex*1e9}/*PIPE SA : max 2h/jour STRICT ; BACKUP sans plafond*/});/*même temps de FLOOR pour tous les SA du jour*/if(saP.length>1){const fl=saP.map(q=>cnt(plan[q.id],'FLOOR')+emX(q));const g=Math.max(...fl)-Math.min(...fl);sc+=g*2e5+g*g*5e4}/*puis même temps de PIPE (BACKUP = variable d'ajustement)*/if(saP.length>1){const pl=saP.map(q=>cnt(plan[q.id],'PIPE')-emX(q));const g=Math.max(...pl)-Math.min(...pl);sc+=g*2e4+g*g*1e4}return sc};
     // recherche locale avec plusieurs départs (graine déterministe), on garde le meilleur plan
     let seed=d*9973+saP.length*31+1;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;let bestPlan=null,bestSc=Infinity;
     for(let rs=0;rs<RESTARTS||(bestSc>=1e8&&rs<90)||(bestSc>=2.5e5&&rs<80);rs++){
@@ -315,7 +316,21 @@ function generate(team,nDays,minFloor,keep,pipeDays){
   if(nDays>5){const d=5;for(let i=6;i<10;i++){if(!floorWarn(Z,team,d,i,minFloor))continue;const h=i-i%2;const sa=team.filter(q=>q.role!=='CES'&&Z[q.id]&&Z[q.id][d][h]==='BACKUP'&&Z[q.id][d][h+1]==='BACKUP');for(const q of sa){if(!floorWarn(Z,team,d,i,minFloor))break;Z[q.id][d][h]='FLOOR';Z[q.id][d][h+1]='FLOOR'}}}
   for(let d=0;d<nDays;d++)if(!(pipeDays&&pipeDays[d]===false))startPipeOff(Z,team,d);
   if(pipeDays)for(let d=0;d<nDays;d++)if(pipeDays[d]===false)applyNoPipe(Z,team,d,minFloor);
+  for(let d=0;d<nDays;d++)if(d<5&&!(pipeDays&&pipeDays[d]===false))glue2h(Z,team,d,minFloor);
   return Z;
+}
+// Une heure isolée PIPE / FLOOR / BACKUP se colle à la pause si l'échange laisse des blocs d'au moins 2h et les autres règles.
+function glue2h(Z,team,d,minFloor){
+  const N=SLOTS.length,rows=team.filter(p=>p.role!=='CES'&&Z[p.id]&&presentAt(p,d,600));
+  const rot=v=>v==='PIPE'||v==='FLOOR'||v==='BACKUP';
+  const avoid=()=>rows.reduce((n,p)=>{const r=Z[p.id][d];let i=0;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if(rot(v)&&j-i===1&&j!==N-1&&r[i-1]!=='PAUSE'&&r[j+1]!=='PAUSE')n++;i=j+1}return n},0);
+  const ok=()=>{for(let i=2;i<N;i++){if(floorWarn(Z,team,d,i,minFloor))return false;const sf=rows.filter(q=>Z[q.id][d][i]==='FLOOR').length;if(sf>saFloorCap(d))return false;const pp=team.filter(q=>Z[q.id]&&['PIPE','CLEAN'].includes(Z[q.id][d][i])).length;if(pp>2)return false;const bb=rows.filter(q=>Z[q.id][d][i]==='BACKUP').length,av=rows.filter(q=>{const v=Z[q.id][d][i];return v&&v!=='PAUSE'&&!isEv(v)}).length;if(sf>0&&bb===0&&av>=2)return false;if(sf===0&&av>0)return false}return true};
+  for(let pass=0;pass<6;pass++){let moved=false;for(const p of rows){const r=Z[p.id][d];const s=[];for(let i=0;i<N;){let j=i;while(j+1<N&&r[j+1]===r[i])j++;s.push({v:r[i],i,j,L:j-i+1});i=j+1}
+    const pk=s.findIndex(x=>x.v==='PAUSE');if(pk<0)continue;
+    for(let k=0;k<s.length;k++){const b=s[k];if(!rot(b.v)||b.L!==2||b.j===N-1||r[b.i-1]==='PAUSE'||r[b.j+1]==='PAUSE'||(b.i===2&&b.v==='PIPE'))continue;
+      let done=false;for(const nb of [k-1,k+1]){if(done||nb<0||nb>=s.length)continue;const t=s[nb];if(!rot(t.v)||t.v===b.v||t.L<4)continue;const fromEnd=nb<k,ti=fromEnd?t.j-1:t.i,leftL=t.L-2,leftPause=fromEnd?r[t.i-1]==='PAUSE':r[t.j+1]==='PAUSE',leftEnd=!fromEnd&&t.j===N-1;if(!(leftL>=4||leftPause||leftEnd))continue;const before=avoid(),saved=r.slice();r[ti]=r[ti+1]=b.v;if(!ok()||avoid()>=before){for(let u=0;u<N;u++)r[u]=saved[u];continue}done=true}
+      if(!done&&pk>=0){const dir=b.i>s[pk].j?1:-1,touch=pk+dir;if(touch>=0&&touch<s.length){const t=s[touch];if(rot(t.v)&&t.v!==b.v&&t.L>=4){const ti=dir>0?t.i:t.j-1;if(r[ti]===t.v&&r[ti+1]===t.v){const before=avoid(),saved=r.slice();r[b.i]=r[b.i+1]=t.v;r[ti]=r[ti+1]=b.v;if(!ok()||avoid()>=before){for(let u=0;u<N;u++)r[u]=saved[u]}else done=true}}}}
+      if(done){moved=true;break}}}if(!moved)break}
 }
 // SA de retour d'OFF : il commence en PIPE (dès 10h, après le PIPE/CLEAN d'ouverture). Plusieurs retours : les premiers créneaux PIPE, sans se chevaucher. Lundi : la veille est le dimanche, seulement s'il est renseigné.
 function startPipeOff(Z,team,d){
@@ -327,12 +342,14 @@ function startPipeOff(Z,team,d){
     const r=Z[q.id][d];let i=cursor;
     while(i+1<N&&(r[i]==='PAUSE'||r[i+1]==='PAUSE'||isEv(r[i])||isEv(r[i+1])))i+=2;
     if(i+1>=N)continue;
+    const free=k=>k<N&&r[k]!=='PAUSE'&&!isEv(r[k]);
+    const span=i+3<N&&[0,1,2,3].every(k=>free(i+k))?4:2;
     for(let k=2;k<N;k++)if(r[k]==='PIPE')r[k]='BACKUP';
-    team.forEach(y=>{if(y===q||y.role==='CES'||!Z[y.id]||!Z[y.id][d])return;const ry=Z[y.id][d];if(ry[i]==='PIPE')ry[i]='BACKUP';if(ry[i+1]==='PIPE')ry[i+1]='BACKUP'});
-    r[i]=r[i+1]='PIPE';
-    const need=!team.some(y=>y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i]==='FLOOR')||!team.some(y=>y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i+1]==='FLOOR');
-    if(need){const donor=team.find(y=>y!==q&&y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i]==='BACKUP'&&Z[y.id][d][i+1]==='BACKUP');if(donor){Z[donor.id][d][i]='FLOOR';Z[donor.id][d][i+1]='FLOOR'}}
-    cursor=i+2;
+    team.forEach(y=>{if(y===q||y.role==='CES'||!Z[y.id]||!Z[y.id][d])return;const ry=Z[y.id][d];for(let k=0;k<span;k++)if(ry[i+k]==='PIPE')ry[i+k]='BACKUP'});
+    for(let k=0;k<span;k++)r[i+k]='PIPE';
+    for(let h=0;h<span;h+=2){const need=!team.some(y=>y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i+h]==='FLOOR')||!team.some(y=>y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i+h+1]==='FLOOR');
+      if(need){const donor=team.find(y=>y!==q&&y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i+h]==='BACKUP'&&Z[y.id][d][i+h+1]==='BACKUP');if(donor){Z[donor.id][d][i+h]='FLOOR';Z[donor.id][d][i+h+1]='FLOOR'}}}
+    cursor=i+span;
   }
 }
 // Jour sans PIPE : aucun PIPE ni PIPE/CLEAN. Le temps libéré va au FLOOR (plafond SA inchangé), puis au BACKUP FLOOR. CLEAN 17h30 et les pauses restent.
@@ -365,7 +382,8 @@ function applyNoPipe(Z,team,d,minFloor){
       if(d===5&&SLOTS[i]>=720&&SLOTS[i]<840){const fb=team.filter(q=>!saP.includes(q)&&['FLOOR','BACKUP'].includes(Z[q.id][d][i])).length+saP.filter(q=>['FLOOR','BACKUP'].includes(plan[q.id][i])).length;sc+=Math.max(0,2-fb)*1e8}}
     if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e7}
     if(saP.length>1){const fl=saP.map(q=>cnt(plan[q.id],'FLOOR'));const g=Math.max(...fl)-Math.min(...fl);sc+=g*2e5+g*g*5e4}
-    saP.forEach(q=>{const r=plan[q.id];if(d===5)sc+=satShortRow(r)*1e7;const pi=r.indexOf('PAUSE');if(pi>0&&r[pi-1]&&r[pi-1]===r[pi+2])sc+=r[pi-1]==='FLOOR'?5e4:900});return sc};
+    const avoid1h=r=>{let n=0,i=0;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if((v==='FLOOR'||v==='BACKUP')&&j-i===1&&j!==N-1&&r[i-1]!=='PAUSE'&&r[j+1]!=='PAUSE')n++;i=j+1}return n};
+    saP.forEach(q=>{const r=plan[q.id];sc+=avoid1h(r)*1e6;if(d===5)sc+=satShortRow(r)*1e7;const pi=r.indexOf('PAUSE');if(pi>0&&r[pi-1]&&r[pi-1]===r[pi+2])sc+=r[pi-1]==='FLOOR'?5e4:900});return sc};
   let seed=d*9973+saP.length*31+9;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;let best=null,bestSc=Infinity;
   for(let rs=0;rs<(saP.length===1?1:48);rs++){
     saP.forEach((p,k)=>{const cs=C[p.id];plan[p.id]=cs[rs?Math.floor(rnd()*cs.length):(k*5+d)%cs.length]});
