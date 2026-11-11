@@ -321,7 +321,23 @@ function generate(team,nDays,minFloor,keep,pipeDays){
   if(pipeDays)for(let d=0;d<nDays;d++)if(pipeDays[d]===false)applyNoPipe(Z,team,d,minFloor);
   for(let d=0;d<nDays;d++)if(d<5&&!(pipeDays&&pipeDays[d]===false))glue2h(Z,team,d,minFloor);
   for(let d=0;d<nDays;d++)soloBackup(Z,team,d,!(pipeDays&&pipeDays[d]===false));
+  if(nDays>5)satLate(Z,team);
   return Z;
+}
+// Samedi dès 17h30 : au plus 2 SA au FLOOR. Le 2e BACKUP FLOOR ne repasse pas en FLOOR : au plus un BACKUP, le surplus va en PIPE.
+function satLate(Z,team){
+  const d=5,sas=team.filter(p=>p.role!=='CES'&&Z[p.id]&&Z[p.id][d]),late=[];
+  for(let i=0;i<SLOTS.length;i++)if(SLOTS[i]>=1050)late.push(i);
+  const at=(q,i)=>Z[q.id][d][i];
+  for(let g=0;g<6;g++){let ch=false;
+    for(const i of late){
+      let floors=sas.filter(q=>at(q,i)==='FLOOR');
+      while(floors.length>2){const q=floors.pop(),dest=sas.some(y=>at(y,i)==='BACKUP')?'PIPE':'BACKUP';
+        for(const j of late)if(at(q,j)==='FLOOR')Z[q.id][d][j]=dest;ch=true;floors=sas.filter(y=>at(y,i)==='FLOOR')}
+      const backs=sas.filter(q=>at(q,i)==='BACKUP');
+      for(let k=1;k<backs.length;k++){const q=backs[k];for(const j of late)if(at(q,j)==='BACKUP')Z[q.id][d][j]='PIPE';ch=true}
+    }
+    if(!ch)break}
 }
 // Deux SA ne partagent jamais un créneau de BACKUP FLOOR. L'un passe en PIPE ; le samedi, ou un jour sans PIPE, il passe en FLOOR.
 function soloBackup(Z,team,d,pipeOn){
