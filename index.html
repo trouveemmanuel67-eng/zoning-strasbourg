@@ -206,7 +206,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 <select id="filt" onchange="S.filter=this.value;save();render()"></select>
 <button class="btn ico" title="Filtrer par collaborateur" onclick="filt.style.display=filt.style.display==='inline-block'?'none':'inline-block'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#241f1a" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></button>
 <button class="btn" onclick="panel.classList.add('open')">Réglage</button>
-<button class="btn" id="vbtn" onclick="S.table=!S.table;save();render()">Vue tableau</button>
+<button class="btn" id="vbtn" onclick="S.table=!S.table;save();render()">Vue tableau</button><button class="btn" id="modifBtn" onclick="togStep()" title="Granularité de l'édition manuelle">MODIF 1H00</button>
 <button class="btn icoimg" id="jpgbtn" onclick="jpg()" title="Télécharger l'image" aria-label="Télécharger l'image"><img src="assets/icon-download.png" alt=""></button><button class="btn red icoimg" onclick="gen()" title="Générer le zoning" aria-label="Générer le zoning"><img src="assets/icon-generate.png" alt=""></button></div><div class="tabs np" id="daytabs"></div>
 <details class="evtools np" id="evtools"><summary>EVENT · Délivery · BACKUP MULHOUSE · DELIVERY MULHOUSE</summary><div class="evbar np" id="evbar">EVENT&nbsp;: <select id="evP"></select> de <select id="evA"></select> à <select id="evB"></select> <button class="btn" onclick="evSet(1)">Placer</button><button class="btn" onclick="evSet(0)">Retirer</button></div><div class="evbar np" id="dlbar">Délivery&nbsp;: <select id="dlP"></select> de <select id="dlA"></select> à <select id="dlB"></select> <button class="btn" onclick="evSet(1,'DELIV','dl')">Placer</button><button class="btn" onclick="evSet(0,'DELIV','dl')">Retirer</button></div><div class="evbar np" id="bmbar">BACKUP MULHOUSE&nbsp;: <select id="bmP"></select> de <select id="bmA"></select> à <select id="bmB"></select> <button class="btn" onclick="evSet(1,'BMUL','bm')">Placer</button><button class="btn" onclick="evSet(0,'BMUL','bm')">Retirer</button></div><div class="evbar np" id="dmbar">DELIVERY MULHOUSE&nbsp;: <select id="dmP"></select> de <select id="dmA"></select> à <select id="dmB"></select> <button class="btn" onclick="evSet(1,'DMUL','dm')">Placer</button><button class="btn" onclick="evSet(0,'DMUL','dm')">Retirer</button></div></details></div></header>
 <div id="calV" class="np" style="margin-top:6px"></div>
@@ -419,7 +419,7 @@ function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'
  const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(6)+' ›';
  sub.textContent=`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()} — Store Strasbourg`;wpick.value=S.week;
  filt.innerHTML='<option value="all">Toute l\'équipe</option>'+S.team.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
- vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
+ vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';modifBtn.textContent=S.step===30?'MODIF 30MIN':'MODIF 1H00';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
  renderCal();renderTable();renderDayTabs()}
 function colsFor(d){const T=S.team.filter(p=>S.filter==='all'||p.id===S.filter),pres=T.filter(p=>!p.days[d].absent).slice(0,MAXJ);
  let base=[...pres,...T.filter(p=>p.days[d].absent)].slice(0,MAXJ);
@@ -458,7 +458,8 @@ function renderCal(){const n=nD();if(S.calDay===undefined)S.calDay=0;if(S.calDay
  if(!ok())h+='<p style="padding:2px 8px 6px;margin:0;color:#aaa">Renseignez les présences (Réglage) puis cliquez sur « Générer le zoning ».</p>';
  if(S.calDay==='w'){h+='<div class="wgrid">';for(let d=0;d<n;d++)h+=dayPanel(d,true);h+='</div><div class="wlg">'+['FLOOR','PIPE','BACKUP','CLEAN','PAUSE','EVENT','DELIV','BMUL','DMUL'].map(v=>`<i class="${v}"></i>${v==='CLEAN'?'PIPE/CLEAN · CLEAN':LAB[v]}`).join('')+'</div>'}else h+=dayPanel(S.calDay,false);
  calV.innerHTML=h}
-function cycB(id,d,i,j,ev){/*modif manuelle : une seule demi-heure (celle cliquée), aucune règle appliquée*/let k=i;if(ev&&j>i){const b=ev.currentTarget.getBoundingClientRect();k=Math.min(j,i+Math.max(0,Math.floor((ev.clientY-b.top)/b.height*(j-i+1))))}const r=S.Z[id][d];r[k]=CYC[(CYC.indexOf(r[k])+1)%CYC.length];S.manual=true;save();render()}
+function togStep(){S.step=S.step===30?60:30;save();render()}
+function cycB(id,d,i,j,ev){/*édition manuelle : 1 h pleine, ou 30 min si le mode le demande*/let k=i;if(ev&&j>i){const b=ev.currentTarget.getBoundingClientRect();k=Math.min(j,i+Math.max(0,Math.floor((ev.clientY-b.top)/b.height*(j-i+1))))}const r=S.Z[id][d];const next=CYC[(CYC.indexOf(r[k])+1)%CYC.length];const a=S.step===30?k:k-k%2,b=S.step===30?k:Math.min(a+1,r.length-1);for(let t=a;t<=b;t++)r[t]=next;S.manual=true;save();render()}
 function renderTable(){
  if(!ok()){grid.innerHTML='<p>Cliquez sur « Générer le zoning ».</p>';tot.innerHTML='';return}
  const d=S.cur;let h=`<h3>${DAYS[d]} ${dDate(d).toLocaleDateString('fr-FR')}</h3><table><tr><th>Collaborateur</th>`+SLOTS.map(m=>'<th>'+fmt(m)+'</th>').join('')+'</tr>';
