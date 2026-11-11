@@ -200,6 +200,7 @@ header{gap:12px!important;margin-bottom:4px!important}.tdy{position:relative;dis
 .cal.week .hr.m45{background:transparent!important;box-shadow:none!important;padding:0!important}
 .cal.week .hr.m45 .hrlab{background:#f8f1df;box-shadow:0 0 0 1px #c4a15a;border-radius:2px;padding:0 2px}
 .col:has(.dayoff){background:#F3EBDE!important}.dayoff{position:absolute;left:0;right:0;background:#F3EBDE url(assets/day-off.png) center/contain no-repeat;z-index:2}
+.ceshead{position:relative;overflow:visible}.cesband{position:absolute;left:0;top:-11px;text-align:center;font-style:normal;font-size:8px;font-weight:700;letter-spacing:1.5px;line-height:1;color:#14B8A6;pointer-events:none;z-index:4}.cal.week .cesband{font-size:7px;letter-spacing:.6px;top:-10px}
 </style>
 <body><div id="bgl"></div>
 <header><h1 class="brand"><img src="assets/logo-team-zoning.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" id="prevW" onclick="wk(-7)" title="Semaine précédente">‹</button><span class="tdy"><i id="wkno" class="wkno">SEMAINE</i><button class="btn" onclick="wk(0)">Aujourd'hui</button></span><button class="btn" id="nextW" onclick="wk(7)" title="Semaine suivante">›</button></div>
@@ -477,9 +478,10 @@ function colsFor(d){const T=S.team.filter(p=>S.filter==='all'||p.id===S.filter);
  const out=T.map(p=>({p,abs:!!(p.days[d]&&p.days[d].absent)}));while(out.length<MAXJ)out.push({p:null,abs:false});return out}
 function dayPanel(d,W){const RH=W?36:34,cols=colsFor(d),pr=cols.map(c=>c.p),L=cols.length,
  cw=(W?innerWidth/3:innerWidth)/ (L+1),narrow=cw<95,tiny=cw<40,dt=dDate(d);
+ let cesN=0;while(cesN<cols.length&&cols[cesN].p&&cols[cesN].p.role==='CES')cesN++;
  let h=`<div class="dpan ${d>=5?'wkend':''}"><div class="dtitle">${DAYS[d].toUpperCase()} ${dt.getDate()} <span>${dt.toLocaleDateString('fr-FR',{month:'long'})}</span></div>
  <div class="cal ${W?'week':'day'}" style="grid-template-columns:var(--tw) repeat(${L},minmax(0,1fr))${W?'':' auto'}"><div class="hc dh" style="border-left:0"></div>`;
- h+=cols.map(({p,abs})=>!p?'<div class="dh">&nbsp;<small>&nbsp;</small></div>':`<div class="dh${W?' wdh':''} tog" data-tog="${p.id}" onclick="togP('${p.id}',${d},event)" title="${esc(p.name)} — cliquer pour passer ${abs?'ON (présent)':'OFF'} ce jour">${esc(p.name)}</div>`).join('');
+ h+=cols.map(({p,abs},i)=>!p?'<div class="dh">&nbsp;<small>&nbsp;</small></div>':`<div class="dh${W?' wdh':''}${i===0&&cesN?' ceshead':''} tog" data-tog="${p.id}" onclick="togP('${p.id}',${d},event)" title="${esc(p.name)} — cliquer pour passer ${abs?'ON (présent)':'OFF'} ce jour">${i===0&&cesN?`<i class="cesband" style="width:${cesN*100}%">CES</i>`:''}${esc(p.name)}</div>`).join('');
  h+=(W?'':'<div class="dh flh">FLOOR</div>')+'<div class="hc" style="position:relative">'+[...SLOTS,1110].map((m,i)=>`<div class="hr${m%60?' hh':''}" style="top:${i*RH}px"><span class="hrlab">${W?fmt(m):fmt(m).replace('h',':')}</span><i class="hrtick"></i></div>`).join('')+`<div class="hr hh m45" style="top:${17.5*RH}px"><span class="hrlab">${W?'17h45':'17:45'}</span><i class="hrtick"></i></div>`+'</div>';
  const H=(SLOTS.length+1)*RH,bg=`background:repeating-linear-gradient(#e6dccb 0 1px,#0000 1px ${2*RH}px),repeating-linear-gradient(#f3eee6 0 1px,#0000 1px ${RH}px)`;
  cols.forEach(({p,abs})=>{if(!p){h+=`<div class="col" style="height:${H}px;position:relative"><div class="absc" style="top:0;height:${SLOTS.length*RH}px"></div>${gl(RH)}</div>`;return}if(abs){h+=`<div class="col" style="height:${H}px;position:relative"><div class="dayoff" style="top:0;height:${SLOTS.length*RH}px"></div></div>`;return}h+=`<div class="col" style="height:${H}px;${bg}">`;if(ok()){const r=S.Z[p.id][d];let i=0;while(i<SLOTS.length){const v=r[i];let j=i;while(j+1<SLOTS.length&&r[j+1]===v)j++;
@@ -548,6 +550,8 @@ function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?34:36,TW=64,NC
   const ttl=DAYS[d].toUpperCase()+' '+dt.getDate(),mo=dt.toLocaleDateString('fr-FR',{month:'long'});g.font='700 19px '+F;const w1=g.measureText(ttl).width;g.font='400 14px '+F;const tX=px+(PW-w1-8-g.measureText(mo).width)/2;tx(ttl,tX,py+DT/2,'700 19px '+F,'#1c1916');g.font='700 19px '+F;
   tx(mo,tX+8+w1,py+DT/2+1,'400 14px '+F,'#888');
   const x0=px+8+TW,y0=py+DT+HH;
+  let cesN=0;while(cesN<cols.length&&cols[cesN].p&&cols[cesN].p.role==='CES')cesN++;
+  if(cesN)tx('CES',x0+cesN*CW/2,py+DT+6,(W1?'700 9px ':'700 7px ')+F,'#14B8A6','center');
   g.strokeStyle='#2a2a30';g.beginPath();g.moveTo(px+8,y0);g.lineTo(px+PW-8,y0);g.stroke();
   [...SLOTS,1110].forEach((m,i)=>{const y=y0+i*RH;{g.strokeStyle=m%60?'#e4dccf':'#c4b496';g.beginPath();g.moveTo(x0,y);g.lineTo(px+PW-8,y);g.stroke()}
    g.strokeStyle=m%60?'#c4b496':'#8d6840';g.beginPath();g.moveTo(x0-8,y);g.lineTo(x0,y);g.stroke();
