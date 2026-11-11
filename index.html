@@ -186,7 +186,8 @@ header{gap:4px!important;margin-bottom:4px!important}
 .headrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 8px;width:100%;max-width:100%}
 .headrow .sub{margin:0;white-space:nowrap}#sub.screenhide{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .headrow .bar,.headrow .legend,.headrow .tabs{display:contents}
-.headrow .nav{display:flex}
+.headrow .nav{display:flex}.nav .btn{white-space:nowrap;letter-spacing:.4px}
+@media(min-width:1920px){.headrow{flex-wrap:nowrap}}
 .cal{--tw:62px}
 .cal.day{--tw:58px}
 .cal.week{--tw:66px}
@@ -198,7 +199,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 .dayoff{position:absolute;left:0;right:0;background:#000 url(day-off.jpg) center/cover no-repeat;z-index:2}
 </style>
 <body><div id="bgl"></div>
-<header><h1 class="brand"><img src="logo-team-zoning-trim.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" onclick="wk(-7)">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" onclick="wk(7)">›</button></div>
+<header><h1 class="brand"><img src="logo-team-zoning-trim.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" id="prevW" onclick="wk(-7)" title="Semaine précédente">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" id="nextW" onclick="wk(7)" title="Semaine suivante">›</button></div>
 <input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
 <select id="filt" onchange="S.filter=this.value;save();render()"></select>
 <button class="btn ico" title="Filtrer par collaborateur" onclick="filt.style.display=filt.style.display==='inline-block'?'none':'inline-block'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#241f1a" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></button>
@@ -413,6 +414,7 @@ function evFill(){evFill1('ev');evFill1('dl');evFill1('bm');evFill1('dm')}
 function evFill1(x){try{const P=document.getElementById(x+'P'),evA=document.getElementById(x+'A'),evB=document.getElementById(x+'B');if(!P)return;const d=S.calDay==='w'?0:S.calDay,cur=P.value,ca=evA.value,cb=evB.value;P.innerHTML=S.team.filter(p=>p.days[d]&&!p.days[d].absent).map(p=>`<option value="${p.id}">${esc(p.name)} (${p.role})</option>`).join('');if(cur)P.value=cur;evA.innerHTML=SLOTS.map((m,i)=>`<option value="${i}">${fmt(m)}</option>`).join('');evB.innerHTML=SLOTS.map((m,i)=>`<option value="${i}">${fmt(m+30)}</option>`).join('');evA.value=ca||'0';evB.value=cb||String(SLOTS.length-1);const week=S.calDay==='w',bar=document.getElementById(x+'bar'),tools=document.getElementById('evtools');if(bar)bar.style.display=week?'none':'';if(tools)tools.style.display=week?'none':''}catch(e){}}
 function evSet(on,T='EVENT',x='ev'){const evP=document.getElementById(x+'P'),evA=document.getElementById(x+'A'),evB=document.getElementById(x+'B');const d=S.calDay;if(d==='w'||!S.Z)return;const id=evP.value,a=+evA.value,b=+evB.value;if(!id||b<a)return alert('Choisissez un collaborateur et une plage (fin après début).');if(on&&b===a)return alert('Un '+LAB[T]+' dure au moins 1h.');const r=S.Z[id][d];for(let k=a;k<=b;k++){if(on)r[k]=T;else if(r[k]===T)r[k]=null}save();render();evA.value='0';evB.value=String(SLOTS.length-1);}
 function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
+ const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(nD()-1)+' ›';
  sub.textContent=`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()} — Store Strasbourg`;wpick.value=S.week;
  filt.innerHTML='<option value="all">Toute l\'équipe</option>'+S.team.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
  vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
