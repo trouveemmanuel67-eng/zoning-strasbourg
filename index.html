@@ -185,7 +185,7 @@ td,th{border-color:#e4dccf;color:#241f1a}
 </head><style id="headlay">
 h1.brand{margin:0;padding:0;line-height:0;background:none!important}
 h1.brand img{height:32px;width:auto;max-width:min(520px,86vw);display:block;object-fit:contain}
-header{gap:4px!important;margin-bottom:4px!important}
+header{gap:12px!important;margin-bottom:4px!important}.tdy{position:relative;display:inline-flex}.wkno{position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);font-style:normal;font-size:9px;letter-spacing:1.5px;color:#8d6840;white-space:nowrap;line-height:1;pointer-events:none}
 .headrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 8px;width:100%;max-width:100%}
 .headrow .sub{margin:0;white-space:nowrap}#sub.screenhide{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .headrow .bar,.headrow .legend,.headrow .tabs{display:contents}
@@ -202,7 +202,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 .dayoff{position:absolute;left:0;right:0;background:#1a1a1a url(assets/day-off.png) center/contain no-repeat;z-index:2}
 </style>
 <body><div id="bgl"></div>
-<header><h1 class="brand"><img src="assets/logo-team-zoning.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" id="prevW" onclick="wk(-7)" title="Semaine précédente">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" id="nextW" onclick="wk(7)" title="Semaine suivante">›</button></div>
+<header><h1 class="brand"><img src="assets/logo-team-zoning.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" id="prevW" onclick="wk(-7)" title="Semaine précédente">‹</button><span class="tdy"><i id="wkno" class="wkno">SEMAINE</i><button class="btn" onclick="wk(0)">Aujourd'hui</button></span><button class="btn" id="nextW" onclick="wk(7)" title="Semaine suivante">›</button></div>
 <input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
 <select id="filt" onchange="S.filter=this.value;save();render()"></select>
 <button class="btn ico" title="Filtrer par collaborateur" onclick="filt.style.display=filt.style.display==='inline-block'?'none':'inline-block'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#241f1a" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></button>
@@ -439,8 +439,9 @@ function evSet(on,T='EVENT',x='ev'){const evP=document.getElementById(x+'P'),evA
 const PCT=[['FLOOR','FLOOR'],['BACKUP','BACKUP FLOOR'],['PIPE','PIPE'],['CLEAN','PIPE/CLEAN'],['CLEAN15','CLEAN'],['PAUSE','PAUSE'],['EVENT','EVENT'],['DELIV','DELIVERY'],['BMUL','BACKUP MULHOUSE'],['DMUL','DELIVERY MULHOUSE']];
 function pctSplit(mins,tot){if(!tot)return PCT.map(()=>0);const raw=PCT.map(([k])=>((mins[k]||0)/tot)*100),base=raw.map(x=>Math.floor(x));let left=100-base.reduce((a,b)=>a+b,0);raw.map((x,i)=>[x-Math.floor(x),i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(left>0){base[i]++;left--}});return base}
 function renderPct(){const el=document.getElementById('pct');if(!el)return;if(!S.Z){el.innerHTML='';return}const rows=S.team.map(p=>{const m={};let tot=0;for(let d=0;d<nD();d++){if(p.days[d].absent)continue;const r=S.Z[p.id]&&S.Z[p.id][d];if(!r)continue;r.forEach((v,i)=>{if(!v||!presentAt(p,d,SLOTS[i]))return;const add=v==='CLEAN15'?15:30;m[v]=(m[v]||0)+add;tot+=add})};return{p,m,tot}});const sum={};let grand=0;let h='<h3>% de présence par poste</h3><div class="pscr"><table><tr><th>Nom</th>'+PCT.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr>';rows.forEach(({p,m,tot})=>{const pc=pctSplit(m,tot);PCT.forEach(([k])=>{sum[k]=(sum[k]||0)+(m[k]||0)});grand+=tot;h+='<tr><td>'+esc(p.name)+'</td>'+pc.map(n=>'<td>'+(tot?n+' %':'–')+'</td>').join('')+'</tr>'});const tp=pctSplit(sum,grand);h+='<tr class="tot"><td>TOTAL équipe</td>'+tp.map(n=>'<td>'+n+' %</td>').join('')+'</tr></table></div>';el.innerHTML=h}
+function isoW(d){d=new Date(d);d.setHours(12);d.setDate(d.getDate()+4-(d.getDay()||7));const y=new Date(d.getFullYear(),0,1);return Math.ceil((((d-y)/86400000)+1)/7)}
 function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
- const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(6)+' ›';
+ const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(6)+' ›';wkno.textContent='SEMAINE '+isoW(dDate(0));
  sub.textContent=`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()} — Store Strasbourg`;wpick.value=S.week;
  filt.innerHTML='<option value="all">Toute l\'équipe</option>'+S.team.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
  vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';modifBtn.textContent=S.step===30?'MODIF 30MIN':'MODIF 1H00';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
