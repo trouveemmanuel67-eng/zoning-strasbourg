@@ -171,6 +171,13 @@ td,th{border-color:#e4dccf;color:#241f1a}
 .warn{background:#f8d6d6;color:#6a2020}
 .card{box-shadow:0 1px 2px rgba(60,40,10,.12)}
 #calcBusy{background:#fff;color:#6d5228;border:1px solid rgba(141,104,64,.4)}
+#panel .pact{display:flex;gap:12px;margin-top:18px;align-items:center;position:sticky;bottom:0;background:#fbf9f6;padding:12px 0 4px;z-index:2}
+#panel .pact .btn{min-width:168px;padding:12px 22px;font-size:13px;letter-spacing:2px}
+#panel .btn.sec{background:transparent;color:#8d6840;border-color:#a88148}
+#panel .btn.sec:hover{background:rgba(168,129,72,.14);color:#6d5228}
+#panel tr.pipe td{background:rgba(196,161,90,.16);font-weight:600;white-space:nowrap}
+#ztoast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);z-index:50;background:#241f1a;color:#faf7f2;border:1px solid #c4a15a;padding:9px 16px;font:600 13px system-ui,sans-serif;letter-spacing:.2px;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+#ztoast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head><style id="headlay">
 h1.brand{margin:0;padding:0;line-height:0;background:none!important}
@@ -195,7 +202,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 <input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
 <select id="filt" onchange="S.filter=this.value;save();render()"></select>
 <button class="btn ico" title="Filtrer par collaborateur" onclick="filt.style.display=filt.style.display==='inline-block'?'none':'inline-block'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#241f1a" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></button>
-<button class="btn ico" title="Présences et réglages" onclick="panel.classList.add('open')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#241f1a" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+<button class="btn" onclick="panel.classList.add('open')">Réglage</button>
 <button class="btn" id="vbtn" onclick="S.table=!S.table;save();render()">Vue tableau</button>
 <button class="btn" id="jpgbtn" onclick="jpg()" title="Télécharger une image (JPEG) identique à la vue affichée" style="background:#2f4a3a;border-color:#3f6150;color:#fff;font-weight:700">⬇ Télécharger l'image</button><button class="btn red" onclick="gen()">＋ Générer le zoning</button></div><div class="tabs np" id="daytabs"></div></div></header>
 <details class="evtools np" id="evtools"><summary>EVENT · Délivery · BACKUP MULHOUSE · DELIVERY MULHOUSE</summary><div class="evbar np" id="evbar">EVENT&nbsp;: <select id="evP"></select> de <select id="evA"></select> à <select id="evB"></select> <button class="btn" onclick="evSet(1)">Placer</button><button class="btn" onclick="evSet(0)">Retirer</button></div><div class="evbar np" id="dlbar">Délivery&nbsp;: <select id="dlP"></select> de <select id="dlA"></select> à <select id="dlB"></select> <button class="btn" onclick="evSet(1,'DELIV','dl')">Placer</button><button class="btn" onclick="evSet(0,'DELIV','dl')">Retirer</button></div><div class="evbar np" id="bmbar">BACKUP MULHOUSE&nbsp;: <select id="bmP"></select> de <select id="bmA"></select> à <select id="bmB"></select> <button class="btn" onclick="evSet(1,'BMUL','bm')">Placer</button><button class="btn" onclick="evSet(0,'BMUL','bm')">Retirer</button></div><div class="evbar np" id="dmbar">DELIVERY MULHOUSE&nbsp;: <select id="dmP"></select> de <select id="dmA"></select> à <select id="dmB"></select> <button class="btn" onclick="evSet(1,'DMUL','dm')">Placer</button><button class="btn" onclick="evSet(0,'DMUL','dm')">Retirer</button></div></details>
@@ -204,7 +211,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 <div id="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Présences (planning Teams)</h3><button class="btn" onclick="panel.classList.remove('open')">Fermer ✕</button></div>
 <label><input type="checkbox" id="sun"> Afficher le dimanche</label>
 <label style="margin-left:20px">Minimum sur le FLOOR : <input type="number" id="minF" min="0" value="2" style="width:50px"></label>
-<div id="pres" style="margin-top:12px;overflow:auto"></div><button class="btn" style="margin-top:10px" onclick="addP()">+ Ajouter un collaborateur</button></div>
+<div id="pres" style="margin-top:12px;overflow:auto"></div><button class="btn" style="margin-top:10px" onclick="addP()">+ Ajouter un collaborateur</button><div class="pact"><button class="btn red" onclick="valider()">Valider</button><button class="btn sec" onclick="resetBase()">Reset</button></div></div>
 <script>
 /*ALGO-START*//*backup-oblig*/
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -212,7 +219,7 @@ const SLOTS=[];for(let m=540;m<1110;m+=30)SLOTS.push(m); // 9h00..18h00 (fin 18h
 const toM=t=>{const[a,b]=t.split(':');return +a*60+ +b};
 const fmt=m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
 function presentAt(p,d,m){const h=p.days[d];return !!h&&!h.absent} // tous cadres : présent toute la journée (9h00-18h30) ou absent
-function generate(team,nDays,minFloor,keep){
+function generate(team,nDays,minFloor,keep,pipeDays){
   const Z={};team.forEach(p=>Z[p.id]=DAYS.slice(0,nDays).map(()=>SLOTS.map(()=>null)));
   // EVENT, Délivery, BACKUP MULHOUSE, DELIVERY MULHOUSE : jamais générés, uniquement manuels ; conservés (keep) et jamais écrasés par un recalcul
   if(keep)team.forEach(p=>{const k=keep[p.id];if(Array.isArray(k))k.forEach((r,d)=>{if(d<nDays&&Array.isArray(r))r.forEach((v,i)=>{if(isEv(v)&&i<SLOTS.length)Z[p.id][d][i]=v})})});
@@ -302,7 +309,52 @@ function generate(team,nDays,minFloor,keep){
     sa.forEach(q=>{const r=Z[q.id][d];for(let i=2;i<r.length;i++)if(r[i]!=='PAUSE'&&!isEv(r[i])&&presentAt(q,d,SLOTS[i]))r[i]='FLOOR';const h=asg.get(q);if(h){const n=L2?4:2;const put=(hh,v)=>{if(!hh)return;const i=SLOTS.indexOf(hh*60);const ok=[...Array(n)].every((_,k)=>r[i+k]==='FLOOR');if(ok)for(let k=0;k<n;k++)r[i+k]=v};put(h,'PIPE');put(bk[h],'BACKUP')}})}}
   /*SAMEDI 12h-14h : réparation finale — si FLOOR < minimum, une heure pleine de BACKUP FLOOR d'un SA passe en FLOOR*/
   if(nDays>5){const d=5;for(let i=6;i<10;i++){if(!floorWarn(Z,team,d,i,minFloor))continue;const h=i-i%2;const sa=team.filter(q=>q.role!=='CES'&&Z[q.id]&&Z[q.id][d][h]==='BACKUP'&&Z[q.id][d][h+1]==='BACKUP');for(const q of sa){if(!floorWarn(Z,team,d,i,minFloor))break;Z[q.id][d][h]='FLOOR';Z[q.id][d][h+1]='FLOOR'}}}
+  if(pipeDays)for(let d=0;d<nDays;d++)if(pipeDays[d]===false)applyNoPipe(Z,team,d,minFloor);
   return Z;
+}
+// Jour sans PIPE : aucun PIPE ni PIPE/CLEAN. Le temps libéré va au FLOOR (plafond SA inchangé), puis au BACKUP FLOOR. CLEAN 17h30 et les pauses restent.
+function applyNoPipe(Z,team,d,minFloor){
+  const N=SLOTS.length,R17=SLOTS.indexOf(1020);
+  const ces=team.filter(p=>p.role==='CES'),sas=team.filter(p=>p.role!=='CES');
+  ces.forEach(p=>{const r=Z[p.id]&&Z[p.id][d];if(!r)return;for(let i=0;i<N;i++)if(r[i]==='PIPE'||r[i]==='CLEAN')r[i]='FLOOR'});
+  const saP=sas.filter(p=>Z[p.id]&&presentAt(p,d,600));
+  saP.forEach(p=>{const r=Z[p.id][d];for(let i=0;i<N;i++)if(r[i]!=='PAUSE'&&!isEv(r[i]))r[i]=null});
+  if(!saP.length){team.forEach(p=>{const r=Z[p.id]&&Z[p.id][d];if(!r)return;for(let i=0;i<N;i++)if(r[i]==='PIPE'||r[i]==='CLEAN')r[i]=p.role==='CES'?'FLOOR':'BACKUP'});return}
+  const two=saP.length===2;
+  const hOk=r=>{for(let i=1;i<N;i++)if(i%2===1&&r[i]!==r[i-1])return false;return true};
+  const runsOk=r=>{let i=0;while(i<N){const v=r[i];let j=i;while(j+1<N&&r[j+1]===v)j++;if(v&&v!=='PAUSE'&&!isEv(v)&&j===i)return false;i=j+1}return true};
+  const cnt=(r,v)=>r.reduce((a,x)=>a+(x===v),0);
+  const blocks=(r,v)=>{const w=r.filter(x=>x!=='PAUSE'&&!isEv(x));return w.filter((x,i)=>x===v&&w[i-1]!==v).length};
+  const cands=p=>{const base=Z[p.id][d],out=[];
+    for(let a=0;a<N-1;a+=2)for(let b=a+2;b<=N;b+=2){const end=b>=N-1?N:b;if(end-a<2)continue;const r=base.slice();for(let i=0;i<N;i++)if(!r[i])r[i]=(i>=a&&i<end)?'FLOOR':'BACKUP';
+      if(!runsOk(r)||!hOk(r)||blocks(r,'PIPE')||blocks(r,'FLOOR')!==1||cnt(r,'BACKUP')<2||cnt(r,'FLOOR')<2)continue;
+      out.push(r)}
+    if(two)for(const pat of [['FLOOR','BACKUP','FLOOR'],['BACKUP','FLOOR','BACKUP']])for(let x=2;x<R17;x+=2){const r=base.slice();for(let i=0;i<N;i++)if(!r[i])r[i]=i<x?pat[0]:i<R17?pat[1]:pat[2];if(runsOk(r)&&hOk(r)&&r[R17-1]!==r[R17]&&cnt(r,'FLOOR')>=2&&cnt(r,'BACKUP')>=2)out.push(r)}
+    if(!out.length){const r=base.slice();for(let i=0;i<N;i++)if(!r[i])r[i]='FLOOR';out.push(r)}
+    return out};
+  const C={};saP.forEach(p=>C[p.id]=saP.length===1?[Z[p.id][d].map(v=>v||'FLOOR')]:cands(p));
+  const fixedF=i=>team.filter(q=>!saP.includes(q)&&Z[q.id][d][i]==='FLOOR').length;
+  const plan={};
+  const score=()=>{let sc=0;for(let i=0;i<N;i++){let f=fixedF(i),bb=0;saP.forEach(q=>{const v=plan[q.id][i];if(v==='FLOOR')f++;if(v==='BACKUP')bb++;if(v==='PIPE'||v==='CLEAN')sc+=1e9});
+      const sf=saP.filter(q=>plan[q.id][i]==='FLOOR').length;sc+=Math.max(0,sf-saFloorCap(d))*1e9;sc+=Math.max(0,minFloor-f)*1e3;sc+=Math.max(0,bb-1)*6e3;
+      const av=saP.filter(q=>plan[q.id][i]&&plan[q.id][i]!=='PAUSE'&&!isEv(plan[q.id][i])).length;
+      if(sf===0&&av>0)sc+=1e9;if(sf>0&&bb===0&&av>=2&&!(d===5&&SLOTS[i]>=720&&SLOTS[i]<840))sc+=1e8;
+      if(d===5&&SLOTS[i]>=720&&SLOTS[i]<840){const fb=team.filter(q=>!saP.includes(q)&&['FLOOR','BACKUP'].includes(Z[q.id][d][i])).length+saP.filter(q=>['FLOOR','BACKUP'].includes(plan[q.id][i])).length;sc+=Math.max(0,2-fb)*1e8}}
+    if(two){const [x,y]=saP;if(plan[x.id][R17]===plan[y.id][R17])sc+=1e7}
+    if(saP.length>1){const fl=saP.map(q=>cnt(plan[q.id],'FLOOR'));const g=Math.max(...fl)-Math.min(...fl);sc+=g*2e5+g*g*5e4}
+    saP.forEach(q=>{const r=plan[q.id];if(d===5)sc+=satShortRow(r)*1e7;const pi=r.indexOf('PAUSE');if(pi>0&&r[pi-1]&&r[pi-1]===r[pi+2])sc+=r[pi-1]==='FLOOR'?5e4:900});return sc};
+  let seed=d*9973+saP.length*31+9;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;let best=null,bestSc=Infinity;
+  for(let rs=0;rs<(saP.length===1?1:48);rs++){
+    saP.forEach((p,k)=>{const cs=C[p.id];plan[p.id]=cs[rs?Math.floor(rnd()*cs.length):(k*5+d)%cs.length]});
+    for(let it=0;it<18;it++){let ch=false;saP.forEach(p=>{let b=null,keep=plan[p.id];C[p.id].forEach(r=>{plan[p.id]=r;const sc=score();if(!b||sc<b.sc)b={sc,r}});plan[p.id]=b?b.r:keep;if(plan[p.id]!==keep)ch=true});if(!ch)break}
+    const sc=score();if(sc<bestSc){bestSc=sc;best={};saP.forEach(p=>best[p.id]=plan[p.id].slice())}if(bestSc<1e3)break}
+  saP.forEach(p=>{Z[p.id][d]=best[p.id]});
+  const capFix=()=>{if(saP.length<2)return;for(let g=0;g<40;g++){let fixed=false;for(let i=0;i<N;i++){const fl=saP.filter(q=>Z[q.id][d][i]==='FLOOR');if(fl.length<=saFloorCap(d))continue;Z[fl[fl.length-1].id][d][i]='BACKUP';fixed=true}if(!fixed)break}};
+  capFix();
+  saP.forEach(q=>{const r=Z[q.id][d];for(let i=0;i<N;i++){if(!r[i]||r[i]==='PAUSE'||isEv(r[i])||r[i-1]===r[i]||r[i+1]===r[i])continue;const nb=[r[i-1],r[i+1]].find(v=>v==='FLOOR'||v==='BACKUP');if(nb)r[i]=nb}});
+  if(d===5)for(let i=6;i<10;i++){if(!floorWarn(Z,team,d,i,minFloor))continue;const h=i-i%2;for(const q of saP.filter(q=>Z[q.id][d][h]==='BACKUP'&&Z[q.id][d][h+1]==='BACKUP')){if(!floorWarn(Z,team,d,i,minFloor))break;if(saP.filter(y=>Z[y.id][d][h]==='FLOOR').length>=saFloorCap(d))break;Z[q.id][d][h]=Z[q.id][d][h+1]='FLOOR'}}
+  capFix();
+  team.forEach(p=>{const r=Z[p.id]&&Z[p.id][d];if(!r)return;for(let i=0;i<N;i++)if(r[i]==='PIPE'||r[i]==='CLEAN')r[i]=p.role==='CES'?'FLOOR':'BACKUP'});
 }
 // règle FLOOR SA : lun-ven au plus 1 SA en FLOOR à la fois, samedi au plus 2 (BACKUP ne compte pas)
 const RESTARTS=12;
@@ -324,14 +376,14 @@ const COL={BACKUP:'#021a58',FLOOR:'#3c8148',PIPE:'#d91219',CLEAN:'#5a1b8f',CLEAN
 let S=JSON.parse(localStorage.getItem('zoningStras')||'null');
 // nettoyage : toute valeur de case inconnue (ancienne case « FIN », etc.) devient une case vide (noire, sans texte)
 const POSTES=['FLOOR','PIPE','BACKUP','PAUSE','CLEAN','CLEAN15','EVENT','DELIV','BMUL','DMUL'];if(S&&S.Z)Object.values(S.Z).forEach(w=>Array.isArray(w)&&w.forEach(r=>Array.isArray(r)&&r.forEach((v,i)=>{if(!POSTES.includes(v))r[i]=null})));
-const TEAM0=[['Manale','CES',3],['David','CES',4],['Hairdine','SA',0],['Francky','SA',1],['Manu','SA',2],['Tanguy','SA',5]]; // [nom, rôle, jour OFF par défaut (modifiable)]
-const mkTeam=()=>TEAM0.map(([n,r,o],k)=>({id:'p'+k,name:n,role:r,days:DAYS.map((_,d)=>({absent:d===6||d===o}))}));
-if(!S){S={team:mkTeam(),sun:false,min:2,Z:null,cur:0}}
+const TEAM0=[['Manale','CES',[0]],['David','CES',[2]],['Hairdine','SA',[2]],['Francky','SA',[3]],['Manu','SA',[1]],['Tanguy','SA',[4]]]; // [nom, rôle, jours OFF du zoning de base]
+const mkTeam=()=>TEAM0.map(([n,r,off],k)=>({id:'p'+k,name:n,role:r,days:DAYS.map((_,d)=>({absent:off.includes(d)}))}));
+if(!S){S={team:mkTeam(),sun:false,min:2,pipe:[true,true,true,true,true,true,true],Z:null,cur:0}}
 else{const gen=p=>/^Collaborateur\b/.test(p.name||'');
  if(S.team.every(gen)){S.team=mkTeam();S.Z=null;S.filter='all'} // ancienne équipe générique -> vraie équipe
  else{const used=new Set(S.team.map(p=>p.name));S.team.filter(gen).forEach(p=>{const f=TEAM0.find(([n,r])=>!used.has(n)&&r===p.role)||TEAM0.find(([n])=>!used.has(n));if(f){p.name=f[0];used.add(f[0])}})}
  localStorage.setItem('zoningStras',JSON.stringify(S))}
-S.team.forEach(p=>p.days.forEach(x=>{delete x.start;delete x.end}));const save=()=>localStorage.setItem('zoningStras',JSON.stringify(S));const nD=()=>S.sun?7:6;
+S.team.forEach(p=>p.days.forEach(x=>{delete x.start;delete x.end}));const save=()=>localStorage.setItem('zoningStras',JSON.stringify(S));const nD=()=>S.sun?7:6;const pipeOn=d=>!Array.isArray(S.pipe)||S.pipe[d]!==false;
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 function monday(d){d=new Date(d);d.setHours(12);d.setDate(d.getDate()-((d.getDay()+6)%7));return d}
 function setWeek(v){S.week=iso(monday(v?new Date(v+'T12:00'):new Date()));save();render()}
@@ -341,14 +393,20 @@ const dDate=i=>{const d=new Date(S.week+'T12:00');d.setDate(d.getDate()+i);retur
 const ini=n=>n.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function renderPres(){sun.checked=S.sun;minF.value=S.min;let h='<table><tr><th>Nom</th><th>Poste</th>'+DAYS.slice(0,nD()).map(d=>'<th>'+d+'</th>').join('')+'<th></th></tr>';
+ h+='<tr class="pipe"><td colspan="2">PIPE</td>'+DAYS.slice(0,nD()).map((_,d)=>`<td><label><input type=checkbox data-pipe="${d}" ${pipeOn(d)?'checked':''} onchange="setPipe(${d},this.checked)"> POSTE PIPE</label></td>`).join('')+'<td></td></tr>';
  S.team.forEach((p,i)=>{h+=`<tr><td><input type=text value="${esc(p.name)}" onchange="S.team[${i}].name=this.value;save();render()"></td>
  <td><select onchange="S.team[${i}].role=this.value;save()"><option ${p.role==='SA'?'selected':''}>SA</option><option ${p.role==='CES'?'selected':''}>CES</option></select></td>`;
  for(let d=0;d<nD();d++){const x=p.days[d];h+=`<td><label><input type=checkbox ${x.absent?'checked':''} onchange="setAbs(${i},${d},this)"> OFF</label><br></td>`}
  h+=`<td><button class=btn onclick="if(confirm('Supprimer ?')){S.team.splice(${i},1);S.Z=null;save();renderPres();render()}">✕</button></td></tr>`});pres.innerHTML=h+'</table>'}
+function setPipe(d,on){if(!Array.isArray(S.pipe))S.pipe=[true,true,true,true,true,true,true];S.pipe[d]=!!on;save()}
+function toast(msg){let t=document.getElementById('ztoast');if(!t){t=document.createElement('div');t.id='ztoast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2400)}
+function readPanel(){S.sun=!!sun.checked;S.min=Math.max(0,+minF.value||0);if(S.cur>=nD())S.cur=0;const b=[...document.querySelectorAll('#pres input[data-pipe]')];if(b.length){if(!Array.isArray(S.pipe))S.pipe=[true,true,true,true,true,true,true];b.forEach(x=>{S.pipe[+x.dataset.pipe]=x.checked})}}
+function valider(){readPanel();save();panel.classList.remove('open');if(gen()!==false)toast('Zoning mis à jour')}
+function resetBase(){S.team=mkTeam();S.sun=false;S.min=2;S.pipe=[true,true,true,true,true,true,true];S.Z=null;S.manual=false;if(S.cur>=nD())S.cur=0;save();renderPres();gen();toast('Zoning de base rétabli')}
 function addP(){const full=[];S.team.push({id:'p'+Date.now(),name:'Collaborateur '+(S.team.length+1),role:'SA',days:DAYS.map((_,d)=>{const f=d!==6&&nPres(d)>=MAXJ;if(f&&d<nD())full.push(DAYS[d]);return{absent:d===6||f}})});save();renderPres();if(full.length)alert('Maximum '+MAXJ+' collaborateurs par jour : le nouveau collaborateur est marqué OFF le '+full.join(', ')+'.')}
 sun.onchange=()=>{S.sun=sun.checked;if(S.cur>=nD())S.cur=0;save();renderPres();render()};minF.onchange=()=>{S.min=+minF.value;save();render()};
-function gen(){const over=[];for(let d=0;d<nD();d++)if(nPres(d)>MAXJ)over.push(DAYS[d]+' ('+nPres(d)+')');if(over.length)return alert('Maximum '+MAXJ+' collaborateurs par jour. Trop de présents : '+over.join(', ')+'. Corrigez les présences (⚙).');S.Z=generate(S.team,nD(),S.min,S.Z);S.manual=false;save();render();const pb=[];shortBlocks(S.Z,S.team,nD()).forEach(b=>{if(b.d===5&&b.at===1080)return;const p=S.team.find(q=>q.id===b.id);pb.push('Bloc de 30 min impossible à éviter : '+(p?p.name:b.id)+' '+DAYS[b.d]+' '+fmt(b.at)+' ('+b.v+')')});{const sm=satMidi(S.Z,S.team);if(sm.length)pb.push('Samedi 12h-14h : moins de 2 personnes au FLOOR / BACKUP FLOOR à '+sm.join(', ')+'.')}for(let d=0;d<nD();d++){const po=[];S.team.forEach(p=>{const r=S.Z[p.id]&&S.Z[p.id][d];if(r)r.forEach((v,i)=>{if(v==='PAUSE'&&(SLOTS[i]<720||SLOTS[i]>=840))po.push(p.name+' '+fmt(SLOTS[i]))})});if(po.length)pb.push(DAYS[d]+' : pause en dehors de 12h00-14h00 ('+po.join(', ')+').')}{const sp=satPipe(S.Z,S.team);if(sp.length)pb.push('Samedi : plusieurs personnes en PIPE ou PIPE/CLEAN en même temps à '+sp.join(', ')+'.')}for(let d=0;d<nD();d++){const kp=SLOTS.filter((m,i)=>S.team.filter(p=>p.role!=='CES'&&S.Z[p.id]&&S.Z[p.id][d][i]==='PIPE').length>2).map(fmt);if(kp.length)pb.push(DAYS[d]+' : plus de 2 SA en PIPE à '+kp.join(', ')+' — inévitable avec max '+saFloorCap(d)+' SA en FLOOR et 1 en BACKUP FLOOR (trop de SA présents).')}
- for(let d=0;d<nD();d++){const ks=SLOTS.filter((m,i)=>floorWarn(S.Z,S.team,d,i,S.min)).map(fmt);if(ks.length)pb.push(DAYS[d]+' : FLOOR sous le minimum ('+S.min+') à '+ks.join(', ')+' — trop peu de présents pendant les pauses, ajustez à la main.')}if(pb.length)setTimeout(()=>alert(pb.join('\n')),50)}
+function gen(){const over=[];for(let d=0;d<nD();d++)if(nPres(d)>MAXJ)over.push(DAYS[d]+' ('+nPres(d)+')');if(over.length){alert('Maximum '+MAXJ+' collaborateurs par jour. Trop de présents : '+over.join(', ')+'. Corrigez les présences (Réglage).');return false}S.Z=generate(S.team,nD(),S.min,S.Z,S.pipe);S.manual=false;save();render();const pb=[];shortBlocks(S.Z,S.team,nD()).forEach(b=>{if(b.d===5&&b.at===1080)return;const p=S.team.find(q=>q.id===b.id);pb.push('Bloc de 30 min impossible à éviter : '+(p?p.name:b.id)+' '+DAYS[b.d]+' '+fmt(b.at)+' ('+b.v+')')});{const sm=satMidi(S.Z,S.team);if(sm.length)pb.push('Samedi 12h-14h : moins de 2 personnes au FLOOR / BACKUP FLOOR à '+sm.join(', ')+'.')}for(let d=0;d<nD();d++){const po=[];S.team.forEach(p=>{const r=S.Z[p.id]&&S.Z[p.id][d];if(r)r.forEach((v,i)=>{if(v==='PAUSE'&&(SLOTS[i]<720||SLOTS[i]>=840))po.push(p.name+' '+fmt(SLOTS[i]))})});if(po.length)pb.push(DAYS[d]+' : pause en dehors de 12h00-14h00 ('+po.join(', ')+').')}{const sp=satPipe(S.Z,S.team);if(sp.length)pb.push('Samedi : plusieurs personnes en PIPE ou PIPE/CLEAN en même temps à '+sp.join(', ')+'.')}for(let d=0;d<nD();d++){const kp=SLOTS.filter((m,i)=>S.team.filter(p=>p.role!=='CES'&&S.Z[p.id]&&S.Z[p.id][d][i]==='PIPE').length>2).map(fmt);if(kp.length)pb.push(DAYS[d]+' : plus de 2 SA en PIPE à '+kp.join(', ')+' — inévitable avec max '+saFloorCap(d)+' SA en FLOOR et 1 en BACKUP FLOOR (trop de SA présents).')}
+ for(let d=0;d<nD();d++){const ks=SLOTS.filter((m,i)=>floorWarn(S.Z,S.team,d,i,S.min)).map(fmt);if(ks.length)pb.push(DAYS[d]+' : FLOOR sous le minimum ('+S.min+') à '+ks.join(', ')+' — trop peu de présents pendant les pauses, ajustez à la main.')}if(pb.length)setTimeout(()=>alert(pb.join('\n')),50);return true}
 const ok=()=>S.Z&&S.team.every(p=>S.Z[p.id]&&S.Z[p.id].length>=nD());
 const fl=(d,i)=>S.team.filter(p=>S.Z[p.id][d][i]==='FLOOR').length;
 function evFill(){evFill1('ev');evFill1('dl');evFill1('bm');evFill1('dm')}
@@ -383,7 +441,7 @@ const HAP=(()=>{let l=null;return function(){try{if(navigator.vibrate){navigator
 const PEND=new Set();let pendT=0;
 function busy(on){let b=document.getElementById('calcBusy');if(!b){b=document.createElement('div');b.id='calcBusy';b.textContent='calcul…';document.body.appendChild(b)}b.classList.toggle('on',!!on)}
 function regenDays(){pendT=0;const ds=[...PEND];PEND.clear();if(!S.Z){busy(0);return}
- ds.forEach(d=>{const T=S.team.map(q=>({...q,days:q.days.map((x,k)=>k===d?x:{...x,absent:true})}));const Z2=generate(T,nD(),S.min,S.Z);S.team.forEach(q=>{if(!S.Z[q.id])S.Z[q.id]=Z2[q.id].map(r=>r.slice());S.Z[q.id][d]=Z2[q.id][d]})});
+ ds.forEach(d=>{const T=S.team.map(q=>({...q,days:q.days.map((x,k)=>k===d?x:{...x,absent:true})}));const Z2=generate(T,nD(),S.min,S.Z,S.pipe);S.team.forEach(q=>{if(!S.Z[q.id])S.Z[q.id]=Z2[q.id].map(r=>r.slice());S.Z[q.id][d]=Z2[q.id][d]})});
  save();render();try{renderPres()}catch(e){}busy(0)}
 function togP(id,d,ev){const p=S.team.find(q=>q.id===id);if(!p)return;if(p.days[d].absent&&nPres(d,p)>=MAXJ){HAP();return alert('Maximum '+MAXJ+' collaborateurs par jour : '+DAYS[d]+' en compte déjà '+MAXJ+'.')}
  p.days[d].absent=!p.days[d].absent;save();HAP();const abs=p.days[d].absent;
@@ -393,7 +451,7 @@ render=(r=>function(){r.apply(this,arguments);evFill()})(render);
 function renderDayTabs(){const n=nD();if(S.table){daytabs.innerHTML=DAYS.slice(0,n).map((d,i)=>`<button class="btn ${i===S.cur?'on':''}" onclick="S.cur=${i};save();render()">${d} ${dDate(i).getDate()}</button>`).join('');return}if(S.calDay===undefined)S.calDay=0;if(S.calDay!=='w'&&S.calDay>=n)S.calDay=0;daytabs.innerHTML=DAYS.slice(0,n).map((d,i)=>`<button class="btn ${S.calDay===i?'on':''}" onclick="S.calDay=${i};save();render()">${d.slice(0,3).toUpperCase()} ${dDate(i).getDate()}</button>`).join('')+`<button class="btn ${S.calDay==='w'?'on':''}" onclick="S.calDay='w';save();render()">Semaine</button>`}
 function renderCal(){const n=nD();if(S.calDay===undefined)S.calDay=0;if(S.calDay!=='w'&&S.calDay>=n)S.calDay=0;
  let h='';
- if(!ok())h+='<p style="padding:2px 8px 6px;margin:0;color:#aaa">Renseignez les présences (⚙) puis cliquez sur « Générer le zoning ».</p>';
+ if(!ok())h+='<p style="padding:2px 8px 6px;margin:0;color:#aaa">Renseignez les présences (Réglage) puis cliquez sur « Générer le zoning ».</p>';
  if(S.calDay==='w'){h+='<div class="wgrid">';for(let d=0;d<n;d++)h+=dayPanel(d,true);h+='</div><div class="wlg">'+['FLOOR','PIPE','BACKUP','CLEAN','PAUSE','EVENT','DELIV','BMUL','DMUL'].map(v=>`<i class="${v}"></i>${v==='CLEAN'?'PIPE/CLEAN · CLEAN':LAB[v]}`).join('')+'</div>'}else h+=dayPanel(S.calDay,false);
  calV.innerHTML=h}
 function cycB(id,d,i,j,ev){/*modif manuelle : une seule demi-heure (celle cliquée), aucune règle appliquée*/let k=i;if(ev&&j>i){const b=ev.currentTarget.getBoundingClientRect();k=Math.min(j,i+Math.max(0,Math.floor((ev.clientY-b.top)/b.height*(j-i+1))))}const r=S.Z[id][d];r[k]=CYC[(CYC.indexOf(r[k])+1)%CYC.length];S.manual=true;save();render()}
@@ -521,8 +579,8 @@ function snapView(){return new Promise((res,rej)=>{try{
  const img=new Image();img.onload=()=>{try{const k=2,c=document.createElement('canvas');c.width=W*k;c.height=H*k;const g=c.getContext('2d');g.fillStyle=bodyCS.backgroundColor;g.fillRect(0,0,c.width,c.height);g.scale(k,k);g.drawImage(img,0,0);c.toDataURL('image/jpeg',.1);res(c)}catch(e){rej(e)}};
  img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}).catch(rej)}catch(e){rej(e)}})}
 /*VERSION : à chaque mise à jour, changer APPV → le planning sauvegardé est régénéré avec les nouvelles règles, et la page se recharge si une version plus récente est en ligne*/
-const APPV='2026-10-31-retour-off';
-if(S&&S.appv!==APPV){S.appv=APPV;try{if(S.Z&&!S.manual){S.Z=generate(S.team,nD(),S.min,S.Z)}save();render()}catch(e){console.warn(e)}}
+const APPV='2026-11-11-pipe-jour';
+if(S&&S.appv!==APPV){S.appv=APPV;try{if(S.Z&&!S.manual){S.Z=generate(S.team,nD(),S.min,S.Z,S.pipe)}save();render()}catch(e){console.warn(e)}}
 fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{const m=t.match(/const APPV='([^']+)'/);if(m&&m[1]!==APPV&&!sessionStorage.getItem('zsReload'+m[1])){sessionStorage.setItem('zsReload'+m[1],'1');location.replace(location.pathname+'?v='+encodeURIComponent(m[1]))}}).catch(()=>{});
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();jpg()}});
 </script></body></html>
