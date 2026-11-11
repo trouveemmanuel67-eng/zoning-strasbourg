@@ -317,7 +317,13 @@ function generate(team,nDays,minFloor,keep,pipeDays){
   for(let d=0;d<nDays;d++)if(!(pipeDays&&pipeDays[d]===false))startPipeOff(Z,team,d);
   if(pipeDays)for(let d=0;d<nDays;d++)if(pipeDays[d]===false)applyNoPipe(Z,team,d,minFloor);
   for(let d=0;d<nDays;d++)if(d<5&&!(pipeDays&&pipeDays[d]===false))glue2h(Z,team,d,minFloor);
+  for(let d=0;d<nDays;d++)soloBackup(Z,team,d,!(pipeDays&&pipeDays[d]===false));
   return Z;
+}
+// Deux SA ne partagent jamais un créneau de BACKUP FLOOR. L'un passe en PIPE ; le samedi, ou un jour sans PIPE, il passe en FLOOR.
+function soloBackup(Z,team,d,pipeOn){
+  const sas=team.filter(p=>p.role!=='CES'&&Z[p.id]&&Z[p.id][d]),to=(d===5||!pipeOn)?'FLOOR':'PIPE';
+  for(let i=0;i<SLOTS.length;i++){const backs=sas.filter(q=>Z[q.id][d][i]==='BACKUP');for(let k=1;k<backs.length;k++)Z[backs[k].id][d][i]=to;}
 }
 // Une heure isolée PIPE / FLOOR / BACKUP se colle à la pause si l'échange laisse des blocs d'au moins 2h et les autres règles.
 function glue2h(Z,team,d,minFloor){
