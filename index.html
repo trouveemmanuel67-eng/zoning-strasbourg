@@ -99,7 +99,7 @@ header{margin-bottom:6px;gap:6px}
 #evtools>summary::before{content:"▸";color:var(--gold2);font-size:10px}
 #evtools[open]>summary::before{content:"▾"}
 #evtools>summary:hover,#evtools[open]>summary{border-color:var(--gold);color:var(--gold2)}
-#evtools .evbar{margin:5px 0 0}
+#evtools .evbar{margin:5px 0 0}#evtools:not([open])>.evbar{display:none}
 .cal{--tw:52px}
 .cal.day{--tw:56px}
 .cal.week{--tw:46px}
@@ -135,7 +135,9 @@ h3{color:#8d6840}
 .red{background:#c4a15a;border-color:#a88448;color:#1c140c!important}
 .red:hover{background:#d4b56e;color:#1c140c}
 .tabs .btn.on{background:rgba(168,129,72,.16);border-color:#8d6840;color:#6d5228}
-#jpgbtn{background:#fff!important;color:#241f1a!important;border-color:#8d6840!important}
+#jpgbtn{background:#241f1a!important;color:#fff!important;border-color:#241f1a!important}
+.btn.icoimg{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;line-height:0}
+.btn.icoimg img{height:18px;width:auto;display:block;pointer-events:none}
 .legend span,.wlg,.evbar{color:#3a342c}
 input,select,.evbar select{background:#fff;color:#241f1a;border-color:rgba(141,104,64,.45);color-scheme:light}
 select option{background:#fff;color:#241f1a}
@@ -187,7 +189,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 .headrow .sub{margin:0;white-space:nowrap}#sub.screenhide{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .headrow .bar,.headrow .legend,.headrow .tabs{display:contents}
 .headrow .nav{display:flex}.nav .btn{white-space:nowrap;letter-spacing:.4px}
-@media(min-width:1920px){.headrow{flex-wrap:nowrap}}
+@media(min-width:1920px){.headrow{flex-wrap:nowrap;align-items:center;gap:4px 6px}.headrow .btn{padding:5px 8px;letter-spacing:.35px;font-size:11px;white-space:nowrap}#evtools{margin:0}#evtools>summary{padding:5px 8px;letter-spacing:.4px;font-size:10px;white-space:nowrap}#wpick{max-width:138px}}
 .cal{--tw:62px}
 .cal.day{--tw:58px}
 .cal.week{--tw:66px}
@@ -199,14 +201,14 @@ header{gap:4px!important;margin-bottom:4px!important}
 .dayoff{position:absolute;left:0;right:0;background:#000 url(day-off.jpg) center/cover no-repeat;z-index:2}
 </style>
 <body><div id="bgl"></div>
-<header><h1 class="brand"><img src="logo-team-zoning-trim.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" id="prevW" onclick="wk(-7)" title="Semaine précédente">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" id="nextW" onclick="wk(7)" title="Semaine suivante">›</button></div>
+<header><h1 class="brand"><img src="assets/logo-team-zoning.png" alt="TEAM ZONING"></h1><div class="headrow"><div class="sub screenhide" id="sub"></div><div class="bar np"><div class="nav"><button class="btn" id="prevW" onclick="wk(-7)" title="Semaine précédente">‹</button><button class="btn" onclick="wk(0)">Aujourd'hui</button><button class="btn" id="nextW" onclick="wk(7)" title="Semaine suivante">›</button></div>
 <input type="date" id="wpick" onchange="setWeek(this.value)" title="Choisir la semaine">
 <select id="filt" onchange="S.filter=this.value;save();render()"></select>
 <button class="btn ico" title="Filtrer par collaborateur" onclick="filt.style.display=filt.style.display==='inline-block'?'none':'inline-block'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#241f1a" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></button>
 <button class="btn" onclick="panel.classList.add('open')">Réglage</button>
 <button class="btn" id="vbtn" onclick="S.table=!S.table;save();render()">Vue tableau</button>
-<button class="btn" id="jpgbtn" onclick="jpg()" title="Télécharger une image (JPEG) identique à la vue affichée" style="background:#2f4a3a;border-color:#3f6150;color:#fff;font-weight:700">⬇ Télécharger l'image</button><button class="btn red" onclick="gen()">＋ Générer le zoning</button></div><div class="tabs np" id="daytabs"></div></div></header>
-<details class="evtools np" id="evtools"><summary>EVENT · Délivery · BACKUP MULHOUSE · DELIVERY MULHOUSE</summary><div class="evbar np" id="evbar">EVENT&nbsp;: <select id="evP"></select> de <select id="evA"></select> à <select id="evB"></select> <button class="btn" onclick="evSet(1)">Placer</button><button class="btn" onclick="evSet(0)">Retirer</button></div><div class="evbar np" id="dlbar">Délivery&nbsp;: <select id="dlP"></select> de <select id="dlA"></select> à <select id="dlB"></select> <button class="btn" onclick="evSet(1,'DELIV','dl')">Placer</button><button class="btn" onclick="evSet(0,'DELIV','dl')">Retirer</button></div><div class="evbar np" id="bmbar">BACKUP MULHOUSE&nbsp;: <select id="bmP"></select> de <select id="bmA"></select> à <select id="bmB"></select> <button class="btn" onclick="evSet(1,'BMUL','bm')">Placer</button><button class="btn" onclick="evSet(0,'BMUL','bm')">Retirer</button></div><div class="evbar np" id="dmbar">DELIVERY MULHOUSE&nbsp;: <select id="dmP"></select> de <select id="dmA"></select> à <select id="dmB"></select> <button class="btn" onclick="evSet(1,'DMUL','dm')">Placer</button><button class="btn" onclick="evSet(0,'DMUL','dm')">Retirer</button></div></details>
+<button class="btn icoimg" id="jpgbtn" onclick="jpg()" title="Télécharger l'image" aria-label="Télécharger l'image"><img src="assets/icon-download.png" alt=""></button><button class="btn red icoimg" onclick="gen()" title="Générer le zoning" aria-label="Générer le zoning"><img src="assets/icon-generate.png" alt=""></button></div><div class="tabs np" id="daytabs"></div>
+<details class="evtools np" id="evtools"><summary>EVENT · Délivery · BACKUP MULHOUSE · DELIVERY MULHOUSE</summary><div class="evbar np" id="evbar">EVENT&nbsp;: <select id="evP"></select> de <select id="evA"></select> à <select id="evB"></select> <button class="btn" onclick="evSet(1)">Placer</button><button class="btn" onclick="evSet(0)">Retirer</button></div><div class="evbar np" id="dlbar">Délivery&nbsp;: <select id="dlP"></select> de <select id="dlA"></select> à <select id="dlB"></select> <button class="btn" onclick="evSet(1,'DELIV','dl')">Placer</button><button class="btn" onclick="evSet(0,'DELIV','dl')">Retirer</button></div><div class="evbar np" id="bmbar">BACKUP MULHOUSE&nbsp;: <select id="bmP"></select> de <select id="bmA"></select> à <select id="bmB"></select> <button class="btn" onclick="evSet(1,'BMUL','bm')">Placer</button><button class="btn" onclick="evSet(0,'BMUL','bm')">Retirer</button></div><div class="evbar np" id="dmbar">DELIVERY MULHOUSE&nbsp;: <select id="dmP"></select> de <select id="dmA"></select> à <select id="dmB"></select> <button class="btn" onclick="evSet(1,'DMUL','dm')">Placer</button><button class="btn" onclick="evSet(0,'DMUL','dm')">Retirer</button></div></details></div></header>
 <div id="calV" class="np" style="margin-top:6px"></div>
 <div id="tableV"><div id="grid" class="wrap" style="padding:8px"></div></div><div id="tot"></div>
 <div id="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Présences (planning Teams)</h3><button class="btn" onclick="panel.classList.remove('open')">Fermer ✕</button></div>
@@ -231,7 +233,7 @@ function generate(team,nDays,minFloor,keep,pipeDays){
   const isPipeCES=(p,d,m)=>d===TUE&&cesPipe[p.id]!=null&&m>=cesPipe[p.id]&&m<cesPipe[p.id]+120;
   for(let d=0;d<nDays;d++){
     const pres=p=>SLOTS.map(m=>presentAt(p,d,m));
-    team.forEach(p=>{const pr=pres(p);SLOTS.forEach((m,i)=>{if(pr[i]&&m<600&&!Z[p.id][d][i])Z[p.id][d][i]='CLEAN'})});
+    team.forEach(p=>{if(p.role==='CES')return;const pr=pres(p);SLOTS.forEach((m,i)=>{if(pr[i]&&m<600&&!Z[p.id][d][i])Z[p.id][d][i]='CLEAN'})});
     // pauses (1h) : CES 12h30 (12h00 le jour où il fait 2h de PIPE 10h-12h, pour éviter un reste de 30 min), SA étalés 12h00/12h30/13h00
     const occ={630:0,660:0,690:0,720:0,750:0,780:0,810:0,840:0,870:0},pst={};
     const setB=(p,st)=>{const i=SLOTS.indexOf(st);if(presentAt(p,d,st)&&presentAt(p,d,st+30)&&!Z[p.id][d][i]&&!Z[p.id][d][i+1]){Z[p.id][d][i]='PAUSE';Z[p.id][d][i+1]='PAUSE';occ[st]++;occ[st+30]++;pst[p.id]=i;return true}return false};
@@ -251,7 +253,7 @@ function generate(team,nDays,minFloor,keep,pipeDays){
     sas.forEach(p=>{if(satDone.has(p))return;if(d===5){[720,780].some(st=>setB(p,st));return}const sc=st=>(sPr.includes(p)?(p===late?(st===780?0:1e6):(st===720?0:1e6)):0)+Math.max(so[st],so[st+30])*1000+Math.max(occ[st],occ[st+30])*10+occ[st]+occ[st+30];const sb=setB;const setB2=st=>{const ok=sb(p,st);if(ok){so[st]++;so[st+30]++}return ok};const opts=[720,780].sort((a,b)=>sc(a)-sc(b)).concat([750]);/*heures pleines : pause SA à 12h ou 13h (12h30 seulement en dernier recours)*/opts.some(st=>setB2(st))});
     // CES : FLOOR ; PIPE David 1h au retour de pause (lun-ven, jours travaillés) ; PIPE Manale mardi et jeudi 14h30-15h30
     const pipeCES=(p,m,i)=>{const n=String(p.name||'').trim().toLowerCase();if(n==='manale'||n==='manal')return (d===1||d===3)&&m>=900&&m<960;if(n==='david')return d<5&&pst[p.id]!=null&&i>=pst[p.id]+2&&i<pst[p.id]+4;return false};
-    ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&!Z[p.id][d][i]){
+    ces.forEach(p=>SLOTS.forEach((m,i)=>{if(presentAt(p,d,m)&&m>=570&&!Z[p.id][d][i]){
       Z[p.id][d][i]=m>=1080?null:m===1050?'CLEAN15':pipeCES(p,m,i)?'PIPE':'FLOOR'}})); // CES : CLEAN 17h30-17h45 (CLEAN15, seul bloc de 15 min, ne compte pas comme FLOOR) ; fin de journée 17h45 (créneau 18h00 vide ; le bloc 17h30 s'affiche jusqu'à 17h45)
     // SA : jamais de retour sur un poste déjà fait : exactement UN bloc FLOOR, UN bloc PIPE, UN bloc BACKUP FLOOR par jour
     // (exception : 2 SA présents → dernière rotation FLOOR 17h00-18h30, 2e FLOOR autorisé) ; pause de préférence entre deux postes (hors 9-10h et pause), blocs ≥ 1h.
@@ -414,7 +416,7 @@ function evFill(){evFill1('ev');evFill1('dl');evFill1('bm');evFill1('dm')}
 function evFill1(x){try{const P=document.getElementById(x+'P'),evA=document.getElementById(x+'A'),evB=document.getElementById(x+'B');if(!P)return;const d=S.calDay==='w'?0:S.calDay,cur=P.value,ca=evA.value,cb=evB.value;P.innerHTML=S.team.filter(p=>p.days[d]&&!p.days[d].absent).map(p=>`<option value="${p.id}">${esc(p.name)} (${p.role})</option>`).join('');if(cur)P.value=cur;evA.innerHTML=SLOTS.map((m,i)=>`<option value="${i}">${fmt(m)}</option>`).join('');evB.innerHTML=SLOTS.map((m,i)=>`<option value="${i}">${fmt(m+30)}</option>`).join('');evA.value=ca||'0';evB.value=cb||String(SLOTS.length-1);const week=S.calDay==='w',bar=document.getElementById(x+'bar'),tools=document.getElementById('evtools');if(bar)bar.style.display=week?'none':'';if(tools)tools.style.display=week?'none':''}catch(e){}}
 function evSet(on,T='EVENT',x='ev'){const evP=document.getElementById(x+'P'),evA=document.getElementById(x+'A'),evB=document.getElementById(x+'B');const d=S.calDay;if(d==='w'||!S.Z)return;const id=evP.value,a=+evA.value,b=+evB.value;if(!id||b<a)return alert('Choisissez un collaborateur et une plage (fin après début).');if(on&&b===a)return alert('Un '+LAB[T]+' dure au moins 1h.');const r=S.Z[id][d];for(let k=a;k<=b;k++){if(on)r[k]=T;else if(r[k]===T)r[k]=null}save();render();evA.value='0';evB.value=String(SLOTS.length-1);}
 function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
- const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(nD()-1)+' ›';
+ const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(6)+' ›';
  sub.textContent=`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()} — Store Strasbourg`;wpick.value=S.week;
  filt.innerHTML='<option value="all">Toute l\'équipe</option>'+S.team.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
  vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
@@ -488,7 +490,7 @@ function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?34:36,TW=64,NC
  const rr=(x,y,w,h,r,fill,st)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.fillStyle=fill;g.fill();if(st){g.strokeStyle=st;g.lineWidth=1;g.stroke()}};
  const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
  if(LOGO.naturalWidth){const mh=Math.min(32,LOGO.naturalHeight/2),sc=mh/LOGO.naturalHeight,iw=LOGO.naturalWidth*sc;g.drawImage(LOGO,(W-iw)/2,34-mh/2,iw,mh)}else tx('TEAM ZONING',W/2,34,'700 28px '+F,'#8d6840','center');
- tx(W1?`${DAYS[days[0]]} ${dDate(days[0]).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`:`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()}`,W/2,68,'400 18px '+F,'#6d665c','center');
+ if(W1)tx(`${DAYS[days[0]]} ${dDate(days[0]).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`,W/2,68,'400 18px '+F,'#6d665c','center');
  days.forEach((d,n)=>{const px=PAD+(n%PERROW)*(PW+GAP),py=TOP+Math.floor(n/PERROW)*(PH+GAP),cols=colsFor(d),dt=dDate(d);
   rr(px,py,PW,PH,12,'#ffffff','#e4dccf');rr(px,py,PW,DT,12,'#fbf9f6');g.fillStyle='#fbf9f6';g.fillRect(px+1,py+DT-12,PW-2,12);
   const ttl=DAYS[d].toUpperCase()+' '+dt.getDate(),mo=dt.toLocaleDateString('fr-FR',{month:'long'});g.font='700 19px '+F;const w1=g.measureText(ttl).width;g.font='400 14px '+F;const tX=px+(PW-w1-8-g.measureText(mo).width)/2;tx(ttl,tX,py+DT/2,'700 19px '+F,'#1c1916');g.font='700 19px '+F;
@@ -509,10 +511,10 @@ function drawZ(days){const W1=days.length===1,CW=W1?170:118,RH=W1?34:36,TW=64,NC
  const hoursL='Horaires 9h00–18h30';g.font='400 13px '+F;const hw=g.measureText(hoursL).width;
  let fsL=14;const legW=fs=>{g.font='600 '+fs+'px '+F;return LGITEMS.reduce((a,it)=>a+50+g.measureText(it[1]).width,0)};
  while(legW(fsL)>W-PAD*2-hw-16&&fsL>9)fsL--;
- let lx=PAD,ly=H-30;LGITEMS.forEach(([v,l])=>{(()=>{let f=CC[v][0];const LG={FLOOR:['#1a4a24','#3c8148','#66c471'],PIPE:['#aa050c','#d91219','#a8050e'],BACKUP:['#010a29','#021a58','#031f68'],CLEAN:['#25084b','#5a1b8f','#9b31c6'],PAUSE:['#f5bd04','#fcdb14','#edb508']}[v];if(LG){f=g.createLinearGradient(lx,ly-11,lx+22,ly+11);f.addColorStop(0,LG[0]);f.addColorStop(.5,LG[1]);f.addColorStop(1,LG[2])}rr(lx,ly-11,22,22,4,f,CC[v][2]);if(v==='BMUL'&&BMI.naturalWidth){g.save();g.beginPath();g.rect(lx,ly-11,22,22);g.clip();const bk=Math.min(22/BMI.naturalWidth,22/BMI.naturalHeight),iw=BMI.naturalWidth*bk,ih=BMI.naturalHeight*bk;g.drawImage(BMI,lx+(22-iw)/2,ly-11+(22-ih)/2,iw,ih);g.restore()}if(v==='DMUL'&&DMI.naturalWidth){g.save();g.beginPath();g.rect(lx,ly-11,22,22);g.clip();const dk=Math.min(22/DMI.naturalWidth,22/DMI.naturalHeight),iw=DMI.naturalWidth*dk,ih=DMI.naturalHeight*dk;g.drawImage(DMI,lx+(22-iw)/2,ly-11+(22-ih)/2,iw,ih);g.restore()}})();tx(l,lx+30,ly,'600 '+fsL+'px '+F,'#3a342c');g.font='600 '+fsL+'px '+F;lx+=50+g.measureText(l).width});
+ let lx=PAD,ly=H-30;[].forEach(([v,l])=>{(()=>{let f=CC[v][0];const LG={FLOOR:['#1a4a24','#3c8148','#66c471'],PIPE:['#aa050c','#d91219','#a8050e'],BACKUP:['#010a29','#021a58','#031f68'],CLEAN:['#25084b','#5a1b8f','#9b31c6'],PAUSE:['#f5bd04','#fcdb14','#edb508']}[v];if(LG){f=g.createLinearGradient(lx,ly-11,lx+22,ly+11);f.addColorStop(0,LG[0]);f.addColorStop(.5,LG[1]);f.addColorStop(1,LG[2])}rr(lx,ly-11,22,22,4,f,CC[v][2]);if(v==='BMUL'&&BMI.naturalWidth){g.save();g.beginPath();g.rect(lx,ly-11,22,22);g.clip();const bk=Math.min(22/BMI.naturalWidth,22/BMI.naturalHeight),iw=BMI.naturalWidth*bk,ih=BMI.naturalHeight*bk;g.drawImage(BMI,lx+(22-iw)/2,ly-11+(22-ih)/2,iw,ih);g.restore()}if(v==='DMUL'&&DMI.naturalWidth){g.save();g.beginPath();g.rect(lx,ly-11,22,22);g.clip();const dk=Math.min(22/DMI.naturalWidth,22/DMI.naturalHeight),iw=DMI.naturalWidth*dk,ih=DMI.naturalHeight*dk;g.drawImage(DMI,lx+(22-iw)/2,ly-11+(22-ih)/2,iw,ih);g.restore()}})();tx(l,lx+30,ly,'600 '+fsL+'px '+F,'#3a342c');g.font='600 '+fsL+'px '+F;lx+=50+g.measureText(l).width});
  tx(hoursL,W-PAD,ly,'400 13px '+F,'#6d665c','right');
  return c}
-/*BG-START*/ const EVI0=new Image(),EVI=EVI0;const DLI=new Image();DLI.src=getComputedStyle(document.documentElement).getPropertyValue('--dlbg').match(/url\("?([^")]+)/)[1];EVI0.src=getComputedStyle(document.documentElement).getPropertyValue('--evbg').match(/url\("?([^")]+)/)[1];const BMI=new Image();{const probe=document.createElement('i');probe.className='BMUL';document.body.appendChild(probe);BMI.src=getComputedStyle(probe).backgroundImage.match(/url\("?([^"')]+)/)[1];probe.remove();}const LOGO=new Image();LOGO.src='logo-team-zoning-trim.png';const DAYOFF=new Image();DAYOFF.src='day-off.jpg';const DMI=new Image();{const probe=document.createElement('i');probe.className='DMUL';document.body.appendChild(probe);DMI.src=getComputedStyle(probe).backgroundImage.match(/url\("?([^"')]+)/)[1];probe.remove();}
+/*BG-START*/ const EVI0=new Image(),EVI=EVI0;const DLI=new Image();DLI.src=getComputedStyle(document.documentElement).getPropertyValue('--dlbg').match(/url\("?([^")]+)/)[1];EVI0.src=getComputedStyle(document.documentElement).getPropertyValue('--evbg').match(/url\("?([^")]+)/)[1];const BMI=new Image();{const probe=document.createElement('i');probe.className='BMUL';document.body.appendChild(probe);BMI.src=getComputedStyle(probe).backgroundImage.match(/url\("?([^"')]+)/)[1];probe.remove();}const LOGO=new Image();LOGO.src='assets/logo-team-zoning.png';const DAYOFF=new Image();DAYOFF.src='day-off.jpg';const DMI=new Image();{const probe=document.createElement('i');probe.className='DMUL';document.body.appendChild(probe);DMI.src=getComputedStyle(probe).backgroundImage.match(/url\("?([^"')]+)/)[1];probe.remove();}
 const BGI=new Image();const bgReady=new Promise(r=>{BGI.onload=()=>r(1);BGI.onerror=()=>r(0)});BGI.src='bg-moteurs.jpg';
 function bgComp(c){return c}/* présentation claire : l'image exportée reste le planning, sans incruster la photo moteurs */
 /*BG-END*/
@@ -566,7 +568,7 @@ function snapView(){return new Promise((res,rej)=>{try{
  const hd=document.querySelector('header').cloneNode(true);hd.querySelectorAll('.bar,.np').forEach(e=>e.remove());const v=src.cloneNode(true);v.style.display='';
  v.querySelectorAll('.tabs,button,.np:not(#calV)').forEach(e=>{if(!e.closest('.dpan'))e.remove()});
  wrap.append(hd,v);document.body.appendChild(wrap);
- const subEx=wrap.querySelector('#sub');if(subEx)subEx.classList.remove('screenhide');
+ wrap.querySelectorAll('#sub,.wlg').forEach(e=>e.remove());
  const all=(a,b)=>{const cs=getComputedStyle(a);let t='';for(let k=0;k<cs.length;k++){const n=cs[k];t+=n+':'+cs.getPropertyValue(n)+';'}b.setAttribute('style',t);b.removeAttribute('class');b.removeAttribute('onclick');[...a.children].forEach((c,i)=>all(c,b.children[i]))};
  const out=wrap.cloneNode(true);all(wrap,out);const H=Math.ceil(wrap.scrollHeight);wrap.remove();
  out.style.position='static';out.style.left='0';out.style.margin='0';
