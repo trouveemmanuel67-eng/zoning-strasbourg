@@ -178,6 +178,7 @@ td,th{border-color:#e4dccf;color:#241f1a}
 #panel .btn.sec{background:transparent;color:#8d6840;border-color:#a88148}
 #panel .btn.sec:hover{background:rgba(168,129,72,.14);color:#6d5228}
 #panel tr.pipe td{background:rgba(196,161,90,.16);font-weight:600;white-space:nowrap}
+#pct{margin-top:16px}#pct h3{font-size:13px;letter-spacing:1px;margin:0 0 8px}#pct .pscr{overflow:auto}#pct table{font-size:11px;width:max-content;min-width:100%}#pct th,#pct td{padding:3px 5px;white-space:nowrap}#pct th{font-size:9px;font-weight:600}#pct tr.tot td{background:rgba(196,161,90,.16)}
 #ztoast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);z-index:50;background:#241f1a;color:#faf7f2;border:1px solid #c4a15a;padding:9px 16px;font:600 13px system-ui,sans-serif;letter-spacing:.2px;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
 #ztoast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -214,7 +215,7 @@ header{gap:4px!important;margin-bottom:4px!important}
 <div id="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Présences (planning Teams)</h3><button class="btn" onclick="panel.classList.remove('open')">Fermer ✕</button></div>
 <label><input type="checkbox" id="sun"> Afficher le dimanche</label>
 <label style="margin-left:20px">Minimum sur le FLOOR : <input type="number" id="minF" min="0" value="2" style="width:50px"></label>
-<div id="pres" style="margin-top:12px;overflow:auto"></div><button class="btn" style="margin-top:10px" onclick="addP()">+ Ajouter un collaborateur</button><div class="pact"><button class="btn red" onclick="valider()">Valider</button><button class="btn sec" onclick="resetBase()">Reset</button></div></div>
+<div id="pres" style="margin-top:12px;overflow:auto"></div><button class="btn" style="margin-top:10px" onclick="addP()">+ Ajouter un collaborateur</button><div id="pct"></div><div class="pact"><button class="btn red" onclick="valider()">Valider</button><button class="btn sec" onclick="resetBase()">Reset</button></div></div>
 <script>
 /*ALGO-START*//*backup-oblig*/
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -312,8 +313,27 @@ function generate(team,nDays,minFloor,keep,pipeDays){
     sa.forEach(q=>{const r=Z[q.id][d];for(let i=2;i<r.length;i++)if(r[i]!=='PAUSE'&&!isEv(r[i])&&presentAt(q,d,SLOTS[i]))r[i]='FLOOR';const h=asg.get(q);if(h){const n=L2?4:2;const put=(hh,v)=>{if(!hh)return;const i=SLOTS.indexOf(hh*60);const ok=[...Array(n)].every((_,k)=>r[i+k]==='FLOOR');if(ok)for(let k=0;k<n;k++)r[i+k]=v};put(h,'PIPE');put(bk[h],'BACKUP')}})}}
   /*SAMEDI 12h-14h : réparation finale — si FLOOR < minimum, une heure pleine de BACKUP FLOOR d'un SA passe en FLOOR*/
   if(nDays>5){const d=5;for(let i=6;i<10;i++){if(!floorWarn(Z,team,d,i,minFloor))continue;const h=i-i%2;const sa=team.filter(q=>q.role!=='CES'&&Z[q.id]&&Z[q.id][d][h]==='BACKUP'&&Z[q.id][d][h+1]==='BACKUP');for(const q of sa){if(!floorWarn(Z,team,d,i,minFloor))break;Z[q.id][d][h]='FLOOR';Z[q.id][d][h+1]='FLOOR'}}}
+  for(let d=0;d<nDays;d++)if(!(pipeDays&&pipeDays[d]===false))startPipeOff(Z,team,d);
   if(pipeDays)for(let d=0;d<nDays;d++)if(pipeDays[d]===false)applyNoPipe(Z,team,d,minFloor);
   return Z;
+}
+// SA de retour d'OFF : il commence en PIPE (dès 10h, après le PIPE/CLEAN d'ouverture). Plusieurs retours : les premiers créneaux PIPE, sans se chevaucher. Lundi : la veille est le dimanche, seulement s'il est renseigné.
+function startPipeOff(Z,team,d){
+  const prev=q=>{if(q.role==='CES')return false;if(d===0){const s=q.days&&q.days[6];return !!(s&&s.absent)}return !!(q.days[d-1]&&q.days[d-1].absent)};
+  const rets=team.filter(q=>q.role!=='CES'&&Z[q.id]&&Z[q.id][d]&&presentAt(q,d,600)&&prev(q));
+  if(!rets.length)return;
+  const N=SLOTS.length;let cursor=2;
+  for(const q of rets){
+    const r=Z[q.id][d];let i=cursor;
+    while(i+1<N&&(r[i]==='PAUSE'||r[i+1]==='PAUSE'||isEv(r[i])||isEv(r[i+1])))i+=2;
+    if(i+1>=N)continue;
+    for(let k=2;k<N;k++)if(r[k]==='PIPE')r[k]='BACKUP';
+    team.forEach(y=>{if(y===q||y.role==='CES'||!Z[y.id]||!Z[y.id][d])return;const ry=Z[y.id][d];if(ry[i]==='PIPE')ry[i]='BACKUP';if(ry[i+1]==='PIPE')ry[i+1]='BACKUP'});
+    r[i]=r[i+1]='PIPE';
+    const need=!team.some(y=>y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i]==='FLOOR')||!team.some(y=>y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i+1]==='FLOOR');
+    if(need){const donor=team.find(y=>y!==q&&y.role!=='CES'&&Z[y.id]&&Z[y.id][d][i]==='BACKUP'&&Z[y.id][d][i+1]==='BACKUP');if(donor){Z[donor.id][d][i]='FLOOR';Z[donor.id][d][i+1]='FLOOR'}}
+    cursor=i+2;
+  }
 }
 // Jour sans PIPE : aucun PIPE ni PIPE/CLEAN. Le temps libéré va au FLOOR (plafond SA inchangé), puis au BACKUP FLOOR. CLEAN 17h30 et les pauses restent.
 function applyNoPipe(Z,team,d,minFloor){
@@ -416,12 +436,15 @@ const fl=(d,i)=>S.team.filter(p=>S.Z[p.id][d][i]==='FLOOR').length;
 function evFill(){evFill1('ev');evFill1('dl');evFill1('bm');evFill1('dm')}
 function evFill1(x){try{const P=document.getElementById(x+'P'),evA=document.getElementById(x+'A'),evB=document.getElementById(x+'B');if(!P)return;const d=S.calDay==='w'?0:S.calDay,cur=P.value,ca=evA.value,cb=evB.value;P.innerHTML=S.team.filter(p=>p.days[d]&&!p.days[d].absent).map(p=>`<option value="${p.id}">${esc(p.name)} (${p.role})</option>`).join('');if(cur)P.value=cur;evA.innerHTML=SLOTS.map((m,i)=>`<option value="${i}">${fmt(m)}</option>`).join('');evB.innerHTML=SLOTS.map((m,i)=>`<option value="${i}">${fmt(m+30)}</option>`).join('');evA.value=ca||'0';evB.value=cb||String(SLOTS.length-1);const week=S.calDay==='w',bar=document.getElementById(x+'bar'),tools=document.getElementById('evtools');if(bar)bar.style.display=week?'none':'';if(tools)tools.style.display=week?'none':''}catch(e){}}
 function evSet(on,T='EVENT',x='ev'){const evP=document.getElementById(x+'P'),evA=document.getElementById(x+'A'),evB=document.getElementById(x+'B');const d=S.calDay;if(d==='w'||!S.Z)return;const id=evP.value,a=+evA.value,b=+evB.value;if(!id||b<a)return alert('Choisissez un collaborateur et une plage (fin après début).');if(on&&b===a)return alert('Un '+LAB[T]+' dure au moins 1h.');const r=S.Z[id][d];for(let k=a;k<=b;k++){if(on)r[k]=T;else if(r[k]===T)r[k]=null}save();render();evA.value='0';evB.value=String(SLOTS.length-1);}
+const PCT=[['FLOOR','FLOOR'],['BACKUP','BACKUP FLOOR'],['PIPE','PIPE'],['CLEAN','PIPE/CLEAN'],['CLEAN15','CLEAN'],['PAUSE','PAUSE'],['EVENT','EVENT'],['DELIV','DELIVERY'],['BMUL','BACKUP MULHOUSE'],['DMUL','DELIVERY MULHOUSE']];
+function pctSplit(mins,tot){if(!tot)return PCT.map(()=>0);const raw=PCT.map(([k])=>((mins[k]||0)/tot)*100),base=raw.map(x=>Math.floor(x));let left=100-base.reduce((a,b)=>a+b,0);raw.map((x,i)=>[x-Math.floor(x),i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(left>0){base[i]++;left--}});return base}
+function renderPct(){const el=document.getElementById('pct');if(!el)return;if(!S.Z){el.innerHTML='';return}const rows=S.team.map(p=>{const m={};let tot=0;for(let d=0;d<nD();d++){if(p.days[d].absent)continue;const r=S.Z[p.id]&&S.Z[p.id][d];if(!r)continue;r.forEach((v,i)=>{if(!v||!presentAt(p,d,SLOTS[i]))return;const add=v==='CLEAN15'?15:30;m[v]=(m[v]||0)+add;tot+=add})};return{p,m,tot}});const sum={};let grand=0;let h='<h3>% de présence par poste</h3><div class="pscr"><table><tr><th>Nom</th>'+PCT.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr>';rows.forEach(({p,m,tot})=>{const pc=pctSplit(m,tot);PCT.forEach(([k])=>{sum[k]=(sum[k]||0)+(m[k]||0)});grand+=tot;h+='<tr><td>'+esc(p.name)+'</td>'+pc.map(n=>'<td>'+(tot?n+' %':'–')+'</td>').join('')+'</tr>'});const tp=pctSplit(sum,grand);h+='<tr class="tot"><td>TOTAL équipe</td>'+tp.map(n=>'<td>'+n+' %</td>').join('')+'</tr></table></div>';el.innerHTML=h}
 function render(){const a=dDate(0),b=dDate(nD()-1),o={day:'numeric',month:'long'};
  const chip=i=>{const d=dDate(i);return DAYS[i].slice(0,3).toUpperCase()+' '+d.getDate()+' '+['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'][d.getMonth()]};prevW.textContent='‹ '+chip(0);nextW.textContent=chip(6)+' ›';
  sub.textContent=`Semaine du ${a.toLocaleDateString('fr-FR',o)} au ${b.toLocaleDateString('fr-FR',o)} ${b.getFullYear()} — Store Strasbourg`;wpick.value=S.week;
  filt.innerHTML='<option value="all">Toute l\'équipe</option>'+S.team.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
  vbtn.textContent=S.table?'Vue calendrier':'Vue tableau';modifBtn.textContent=S.step===30?'MODIF 30MIN':'MODIF 1H00';calV.style.display=S.table?'none':'';tableV.style.display=S.table?'':'none';
- renderCal();renderTable();renderDayTabs()}
+ renderCal();renderTable();renderDayTabs();renderPct()}
 function colsFor(d){const T=S.team.filter(p=>S.filter==='all'||p.id===S.filter),pres=T.filter(p=>!p.days[d].absent).slice(0,MAXJ);
  let base=[...pres,...T.filter(p=>p.days[d].absent)].slice(0,MAXJ);
  const out=base.map(p=>({p,abs:p.days[d].absent}));while(out.length<MAXJ)out.push({p:null,abs:false});return out}
