@@ -281,6 +281,9 @@ function generate(team,nDays,minFloor,keep,pipeDays){
   const Z={};team.forEach(p=>Z[p.id]=DAYS.slice(0,nDays).map(()=>SLOTS.map(()=>null)));
   // EVENT, Délivery, BACKUP MULHOUSE, DELIVERY MULHOUSE, OFF partiel : jamais générés, uniquement manuels ; conservés (keep) et jamais écrasés par un recalcul
   if(keep)team.forEach(p=>{const k=keep[p.id];if(Array.isArray(k))k.forEach((r,d)=>{if(d<nDays&&Array.isArray(r))r.forEach((v,i)=>{if(isHold(v)&&i<SLOTS.length)Z[p.id][d][i]=v})})});
+  // OFF 9h00-9h30 de base pour David et Manale, chaque jour travaillé (exception 30 min) ; DAY OFF journée entière prime ; créneau encore modifiable / retirable à la main
+  const isCes930=p=>{const n=String(p.name||'').trim().toLowerCase();return n==='david'||n==='manale'||n==='manal'};
+  team.forEach(p=>{if(!isCes930(p))return;for(let d=0;d<nDays;d++){if(!presentAt(p,d,540))continue;if(!Z[p.id][d][0])Z[p.id][d][0]='OFF'}});
   const bal={},balP={},balB={};team.forEach(p=>{bal[p.id]=0;balP[p.id]=0;balB[p.id]=0}); // floor - pipe (en créneaux)
   const ces=team.filter(p=>p.role==='CES'),sas=team.filter(p=>p.role!=='CES');
   // PIPE CES : uniquement le MARDI, 2h00 chacun si les 2 CES sont présents (10h-12h puis 14h-16h, jamais en même temps) ; 1 seul CES le mardi → pas de PIPE CES ; aucun autre jour
@@ -724,7 +727,7 @@ function snapView(){return new Promise((res,rej)=>{try{
  const img=new Image();img.onload=()=>{try{const k=2,c=document.createElement('canvas');c.width=W*k;c.height=H*k;const g=c.getContext('2d');g.fillStyle=bodyCS.backgroundColor;g.fillRect(0,0,c.width,c.height);g.scale(k,k);g.drawImage(img,0,0);c.toDataURL('image/jpeg',.1);res(c)}catch(e){rej(e)}};
  img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}).catch(rej)}catch(e){rej(e)}})}
 /*VERSION : à chaque mise à jour, changer APPV → le planning sauvegardé est régénéré avec les nouvelles règles, et la page se recharge si une version plus récente est en ligne*/
-const APPV='2026-11-16-off-label';
+const APPV='2026-11-16-ces-off-930';
 if(S&&S.appv!==APPV){S.appv=APPV;try{if(S.Z&&!S.manual){S.Z=generate(S.team,nD(),S.min,S.Z,S.pipe)}save();render()}catch(e){console.warn(e)}}
 fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{const m=t.match(/const APPV='([^']+)'/);if(m&&m[1]!==APPV&&!sessionStorage.getItem('zsReload'+m[1])){sessionStorage.setItem('zsReload'+m[1],'1');location.replace(location.pathname+'?v='+encodeURIComponent(m[1]))}}).catch(()=>{});
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();jpg()}});
