@@ -279,7 +279,7 @@ function presentAt(p,d,m){const h=p.days[d];return !!h&&!h.absent} // tous cadre
 function isHold(v){return v==='OFF'||v==='EVENT'||v==='DELIV'||v==='BMUL'||v==='DMUL'} // postes manuels et OFF partiel : jamais écrasés par le générateur
 const MIDH=780; // 13h00 : coupure matin / après-midi
 function offMode(p,d){const h=p.days[d];if(!h)return 'on';if(h.absent)return 'day';return h.off==='am'?'am':h.off==='pm'?'pm':'on'}
-function applyHalfOff(Z,p,d){const m=offMode(p,d);if(m!=='am'&&m!=='pm')return;const mid=SLOTS.indexOf(MIDH),a=m==='am'?0:mid,b=m==='am'?mid-1:(p.role==='CES'?SLOTS.indexOf(1050):SLOTS.length-1);if(a<0||b<a)return;for(let i=a;i<=b&&i<SLOTS.length;i++)Z[p.id][d][i]='OFF'}
+function applyHalfOff(Z,p,d){const m=offMode(p,d);if(m!=='am'&&m!=='pm')return;const mid=SLOTS.indexOf(MIDH),a=m==='am'?0:mid,b=m==='am'?mid-1:(p.role==='CES'?SLOTS.indexOf(1050):SLOTS.length-1);if(a<0||b<a)return;for(let i=0;i<SLOTS.length;i++){if(Z[p.id][d][i]==='OFF'&&(i<a||i>b))Z[p.id][d][i]=null}for(let i=a;i<=b&&i<SLOTS.length;i++)Z[p.id][d][i]='OFF'}
 function ordPeople(list,names){names=names||['david','manale','manu','hairdine','tanguy','francky'];const rank=p=>{const i=names.indexOf(String(p&&p.name||'').trim().toLowerCase());return i<0?names.length:i};return (list||[]).map((p,i)=>({p,i})).sort((a,b)=>rank(a.p)-rank(b.p)||a.i-b.i).map(x=>x.p)}
 function generate(team,nDays,minFloor,keep,pipeDays){
   team=ordPeople(team,['manale','david','hairdine','francky','manu','tanguy']);
@@ -598,7 +598,7 @@ function regenDays(){pendT=0;const ds=[...PEND];PEND.clear();if(!S.Z){busy(0);re
  ds.forEach(d=>{const T=S.team.map(q=>({...q,days:q.days.map((x,k)=>k===d?x:{...x,absent:true})}));const Z2=generate(T,nD(),S.min,S.Z,S.pipe);S.team.forEach(q=>{if(!S.Z[q.id])S.Z[q.id]=Z2[q.id].map(r=>r.slice());S.Z[q.id][d]=Z2[q.id][d]})});
  save();render();try{renderPres()}catch(e){}busy(0)}
 function togP(id,d,ev){const p=S.team.find(q=>q.id===id);if(!p)return;const cur=offMode(p,d),next={on:'am',am:'pm',pm:'day',day:'on'}[cur];if(next==='on'&&nPres(d,p)>=MAXJ){HAP();return alert('Maximum '+MAXJ+' collaborateurs par jour : '+DAYS[d]+' en compte déjà '+MAXJ+'.')}
- p.days[d].absent=next==='day';p.days[d].off=(next==='am'||next==='pm')?next:null;if(S.Z&&S.Z[p.id]&&S.Z[p.id][d]&&(next==='on'||next==='day')){const r=S.Z[p.id][d];for(let i=0;i<r.length;i++)if(r[i]==='OFF')r[i]=null}save();HAP();
+ p.days[d].absent=next==='day';p.days[d].off=(next==='am'||next==='pm')?next:null;if(S.Z&&S.Z[p.id]&&S.Z[p.id][d]){const r=S.Z[p.id][d];for(let i=0;i<r.length;i++)if(r[i]==='OFF')r[i]=null}save();HAP();
  const el=(ev&&ev.currentTarget)||null;if(el){el.classList.remove('tapd');void el.offsetWidth;el.classList.add('tapd','pend')}
  busy(1);PEND.add(d);clearTimeout(pendT);pendT=setTimeout(()=>requestAnimationFrame(()=>setTimeout(regenDays,0)),300)}
 render=(r=>function(){r.apply(this,arguments);evFill()})(render);
@@ -735,7 +735,7 @@ function snapView(){return new Promise((res,rej)=>{try{
  const img=new Image();img.onload=()=>{try{const k=2,c=document.createElement('canvas');c.width=W*k;c.height=H*k;const g=c.getContext('2d');g.fillStyle=bodyCS.backgroundColor;g.fillRect(0,0,c.width,c.height);g.scale(k,k);g.drawImage(img,0,0);c.toDataURL('image/jpeg',.1);res(c)}catch(e){rej(e)}};
  img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}).catch(rej)}catch(e){rej(e)}})}
 /*VERSION : à chaque mise à jour, changer APPV → le planning sauvegardé est régénéré avec les nouvelles règles, et la page se recharge si une version plus récente est en ligne*/
-const APPV='2026-11-16-off-half-cycle';
+const APPV='2026-11-16-off-half-clear';
 if(S&&S.appv!==APPV){S.appv=APPV;try{if(S.Z&&!S.manual){S.Z=generate(S.team,nD(),S.min,S.Z,S.pipe)}save();render()}catch(e){console.warn(e)}}
 fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{const m=t.match(/const APPV='([^']+)'/);if(m&&m[1]!==APPV&&!sessionStorage.getItem('zsReload'+m[1])){sessionStorage.setItem('zsReload'+m[1],'1');location.replace(location.pathname+'?v='+encodeURIComponent(m[1]))}}).catch(()=>{});
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();jpg()}});
